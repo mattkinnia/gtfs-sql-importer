@@ -63,6 +63,18 @@ insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
 insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
        values (2, 'Wheelchair boarding is not possible at this stop');
 
+--related to gtfs_stops(wheelchair_accessible)
+create table wheelchair_accessible (
+  wheelchair_accessible int PRIMARY KEY,
+  description text
+);
+
+insert into wheelchair_accessible(wheelchair_accessible, description)
+        values (0, 'No accessibility information available for this trip');
+insert into wheelchair_accessible(wheelchair_accessible, description)
+        values (1, 'The vehicle being used on this particular trip can accommodate at least one rider in a wheelchair');
+insert into wheelchair_accessible(wheelchair_accessible, description)
+        values (0, 'No riders in wheelchairs can be accommodated on this tripp');
 
 create table gtfs_stops (
   stop_id    text ,--PRIMARY KEY,
@@ -226,6 +238,8 @@ create table gtfs_trips (
   block_id text,
   shape_id text,  
   trip_short_name text,
+  wheelchair_accessible int --FOREIGN KEY REFERENCES gtfs_wheelchair_accessible(wheelchair_accessible)
+
   -- unofficial features
   trip_type text
 );
