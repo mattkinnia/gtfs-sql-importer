@@ -20,6 +20,7 @@ drop table gtfs_payment_methods cascade;
 
 drop table gtfs_location_types cascade;
 drop table gtfs_wheelchair_boardings cascade;
+drop table gtfs_wheelchair_accessible cascade;
 drop table gtfs_transfer_types cascade;
 
 drop table service_combo_ids cascade;
