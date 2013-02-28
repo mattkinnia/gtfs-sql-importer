@@ -25,6 +25,15 @@ import sys
 import os
 
 
+def time_to_seconds(text):
+    h, m, s = [int(x) for x in text.split(':')]
+    return (h * 60 * 60) + (m * 60) + s
+
+def secs_to_time(s):
+    h, m = divmod(s, 60 * 60)
+    m, s = divmod(m, 60)
+    return "%2.2d:%2.2d:%2.2d" % (h, m, s)
+
 class SpecialHandler(object):
     """
     A SpecialHandler does a little extra special work for a particular
@@ -80,17 +89,6 @@ class TripsHandler(SpecialHandler):
 
 
 class StopTimesHandler(SpecialHandler):
-    @staticmethod
-    def time_to_seconds(text):
-        h, m, s = [int(x) for x in text.split(':')]
-        return (h * 60 * 60) + (m * 60) + s
-
-    @staticmethod
-    def secs_to_time(s):
-        h, m = divmod(s, 60 * 60)
-        m, s = divmod(m, 60)
-        return "%2.2d:%2.2d:%2.2d" % (h, m, s)
-
     def handle_cols(self, cols):
         return cols + ['arrival_time_seconds', 'departure_time_seconds']
 
@@ -105,11 +103,11 @@ class StopTimesHandler(SpecialHandler):
         arr_secs = dep_secs = ""
 
         if row[arr_index]:
-            arr_secs = self.time_to_seconds(row[arr_index])
+            arr_secs = time_to_seconds(row[arr_index])
             row[arr_index] = self.secs_to_time(arr_secs)
 
         if row[dep_index]:
-            dep_secs = self.time_to_seconds(row[dep_index])
+            dep_secs = time_to_seconds(row[dep_index])
             row[dep_index] = self.secs_to_time(dep_secs)
 
         return row + [str(arr_secs), str(dep_secs)]
@@ -123,11 +121,11 @@ class FrequenciesHandler(SpecialHandler):
         start_index = cols.index('start_time')
         end_index = cols.index('end_time')
 
-        start_secs = StopTimesHandler.time_to_seconds(row[start_index])
-        end_secs = StopTimesHandler.time_to_seconds(row[end_index])
+        start_secs = time_to_seconds(row[start_index])
+        end_secs = time_to_seconds(row[end_index])
 
-        row[start_index] = StopTimesHandler.secs_to_time(start_secs)
-        row[end_index] = StopTimesHandler.secs_to_time(end_secs)
+        row[start_index] = secs_to_time(start_secs)
+        row[end_index] = secs_to_time(end_secs)
 
         return row + [str(start_secs), str(end_secs)]
 
@@ -196,7 +194,7 @@ if __name__ == "__main__":
         print "  If nocopy is present, then uses INSERT instead of COPY."
         sys.exit()
 
-    use_copy = True if not ("nocopy" in sys.argv[2:]) else False
+    use_copy = "nocopy" not in sys.argv[2:]
 
     print "begin;"
 
