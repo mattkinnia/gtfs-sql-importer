@@ -104,11 +104,11 @@ class StopTimesHandler(SpecialHandler):
 
         if row[arr_index]:
             arr_secs = time_to_seconds(row[arr_index])
-            row[arr_index] = self.secs_to_time(arr_secs)
+            row[arr_index] = secs_to_time(arr_secs)
 
         if row[dep_index]:
             dep_secs = time_to_seconds(row[dep_index])
-            row[dep_index] = self.secs_to_time(dep_secs)
+            row[dep_index] = secs_to_time(dep_secs)
 
         return row + [str(arr_secs), str(dep_secs)]
 
