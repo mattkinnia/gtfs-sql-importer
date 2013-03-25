@@ -159,8 +159,9 @@ def import_file(fname, tablename, handler, COPY=True):
         func = lambda v: str.strip(v) or default_val
 
     for row in reader:
-        vals = handler.handle_vals(row, header)
-        yield insertSQL % delim.join(map(func, vals))
+        if any(row):
+            vals = handler.handle_vals(row, header)
+            yield insertSQL % delim.join(map(func, vals))
 
     if COPY:
         yield "\\.\n"
