@@ -70,6 +70,7 @@ create table gtfs_stops (
   stop_region text,
   stop_postcode text,
   stop_country text,
+  wheelchair_boarding int,
 
   -- unofficial features
 
