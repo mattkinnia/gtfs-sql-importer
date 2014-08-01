@@ -1,30 +1,30 @@
-drop table gtfs_agency cascade;
-drop table gtfs_stops cascade;
-drop table gtfs_routes cascade;
-drop table gtfs_calendar cascade;
-drop table gtfs_calendar_dates cascade;
-drop table gtfs_fare_attributes cascade;
-drop table gtfs_fare_rules cascade;
-drop table gtfs_shapes cascade;
-drop table gtfs_trips cascade;
-drop table gtfs_stop_times cascade;
-drop table gtfs_frequencies cascade;
+drop table IF EXISTS gtfs_agency cascade;
+drop table IF EXISTS gtfs_stops cascade;
+drop table IF EXISTS gtfs_routes cascade;
+drop table IF EXISTS gtfs_calendar cascade;
+drop table IF EXISTS gtfs_calendar_dates cascade;
+drop table IF EXISTS gtfs_fare_attributes cascade;
+drop table IF EXISTS gtfs_fare_rules cascade;
+drop table IF EXISTS gtfs_shapes cascade;
+drop table IF EXISTS gtfs_trips cascade;
+drop table IF EXISTS gtfs_stop_times cascade;
+drop table IF EXISTS gtfs_frequencies cascade;
 
-drop table gtfs_transfers cascade;
-drop table gtfs_feed_info cascade;
+drop table IF EXISTS gtfs_transfers cascade;
+drop table IF EXISTS gtfs_feed_info cascade;
 
-drop table gtfs_route_types cascade;
-drop table gtfs_directions cascade;
-drop table gtfs_pickup_dropoff_types cascade;
-drop table gtfs_payment_methods cascade;
+drop table IF EXISTS gtfs_route_types cascade;
+drop table IF EXISTS gtfs_directions cascade;
+drop table IF EXISTS gtfs_pickup_dropoff_types cascade;
+drop table IF EXISTS gtfs_payment_methods cascade;
 
-drop table gtfs_location_types cascade;
-drop table gtfs_wheelchair_boardings cascade;
-drop table gtfs_wheelchair_accessible cascade;
-drop table gtfs_transfer_types cascade;
+drop table IF EXISTS gtfs_location_types cascade;
+drop table IF EXISTS gtfs_wheelchair_boardings cascade;
+drop table IF EXISTS gtfs_wheelchair_accessible cascade;
+drop table IF EXISTS gtfs_transfer_types cascade;
 
-drop table service_combo_ids cascade;
-drop table service_combinations cascade;
+drop table IF EXISTS service_combo_ids cascade;
+drop table IF EXISTS service_combinations cascade;
 
 begin;
 
@@ -51,7 +51,7 @@ insert into gtfs_location_types(location_type, description)
 insert into gtfs_location_types(location_type, description) 
        values (2,'station entrance');
 
---related to gtf_stops(wheelchair_boarding)
+--related to gtfs_stops(wheelchair_boarding)
 create table gtfs_wheelchair_boardings (
   wheelchair_boarding int PRIMARY KEY,
   description text
@@ -65,16 +65,16 @@ insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
        values (2, 'Wheelchair boarding is not possible at this stop');
 
 --related to gtfs_stops(wheelchair_accessible)
-create table wheelchair_accessible (
+create table gtfs_wheelchair_accessible (
   wheelchair_accessible int PRIMARY KEY,
   description text
 );
 
-insert into wheelchair_accessible(wheelchair_accessible, description)
+insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
         values (0, 'No accessibility information available for this trip');
-insert into wheelchair_accessible(wheelchair_accessible, description)
+insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
         values (1, 'The vehicle being used on this particular trip can accommodate at least one rider in a wheelchair');
-insert into wheelchair_accessible(wheelchair_accessible, description)
+insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
         values (2, 'No riders in wheelchairs can be accommodated on this trip');
 
 create table gtfs_stops (
