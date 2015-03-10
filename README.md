@@ -21,10 +21,12 @@ This is how to import GTFS data into SQL:
       vacuumer.sql \
     | psql mydbname
 
-### PostGIS (spatially enable your tables)
+### PostGIS (spatially enable your tables and add handy distances along shape)
     cat gtfs_tables.sql \
       <(python import_gtfs_to_sql.py path/to/gtfs/data/directory) \
       gtfs_tables_makespatial.sql \
+      gtfs_add_shape_distance.sql \
+      gtfs_add_stop_dist_along_shape.sql \
       gtfs_tables_makeindexes.sql \
       vacuumer.sql \
     | psql mydbname
