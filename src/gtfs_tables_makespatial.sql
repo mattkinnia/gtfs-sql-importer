@@ -1,7 +1,7 @@
 -- Add spatial support for PostGIS databases only
 
 -- Drop everything first
-DROP TABLE gtfs_shape_geoms CASCADE;
+DROP TABLE IF EXISTS gtfs_shape_geoms CASCADE;
 
 BEGIN;
 -- Add the_geom column to the gtfs_stops table - a 2D point geometry
