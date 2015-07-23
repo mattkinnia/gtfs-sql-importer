@@ -11,7 +11,7 @@ drop table if exists gtfs_distinct_patterns;
 
 CREATE TABLE gtfs_distinct_patterns AS
 SELECT distinct t.route_id, t.direction_id, t.shape_id, st.stop_sequence, st.stop_id from gtfs_stop_times st
-inner join gtfs_ trips t on st.trip_id = t.trip_id;
+inner join gtfs_trips t on st.trip_id = t.trip_id;
 
 CREATE TABLE gtfs_stop_distances_along_shape AS
 SELECT a.route_id, direction_id, shape_id, stop_sequence, stop_id, round(cast(st_line_locate_point(route_geom,stop_geom) as numeric),3) AS pct_along_shape, 
