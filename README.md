@@ -29,6 +29,10 @@ running the step above. After fixing the error by manually correcting the GTFS
 files, you can simply repeat the command (which will likely break again, and 
 so on).
 
+## UPSERT support
+if importing data that would cause a key collision, using the "nocopy" option will allow UPSERT (ON CONFLICT DO NOTHING).
+    e.g. `python src/import_gtfs_to_sql.py $file nocopy  | psql -q gtfs`
+
 ## Modification within SQL Database
 
 If you are editing data within the SQL database, it is usually much faster to 
