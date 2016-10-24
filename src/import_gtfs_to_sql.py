@@ -149,7 +149,7 @@ def import_file(fname, tablename, handler, COPY=True):
 
     if not COPY:
         delim = ","
-        insertSQL = "INSERT INTO " + tablename + " (" + cols + ") VALUES (%s);"
+        insertSQL = "INSERT INTO " + tablename + " (" + cols + ") VALUES (%s) ON CONFLICT DO NOTHING;"
         func = lambda v: ((v and ("'" + v.replace("'", "''") + "'")) or default_val)
     else:
         delim = "|"
