@@ -133,10 +133,13 @@ class FrequenciesHandler(SpecialHandler):
 def import_file(fname, tablename, handler, COPY=True):
     """Returns SQL statement iterator"""
     try:
-        f = open(fname, 'r')
-    except:
-        yield "-- file %s doesn't exist" % fname
-        return
+        with open(fname, 'r') as f:
+            if not handler:
+                handler = SpecialHandler()
+
+            reader = csv.reader(f, dialect=csv.excel)
+            header = handler.handle_cols([c.strip() for c in reader.next()])
+            cols = ",".join(header)
 
     if not handler:
         handler = SpecialHandler()
@@ -184,7 +187,7 @@ if __name__ == "__main__":
         "feed_info",
         ]
 
-    handlers = dict.fromkeys(fnames)
+    handlers = {}
     handlers['agency'] = AgencyHandler()
     handlers['stop_times'] = StopTimesHandler()
     handlers['trips'] = TripsHandler()
@@ -200,7 +203,7 @@ if __name__ == "__main__":
     print "begin;"
 
     for fname in fnames:
-        for statement in import_file(os.path.join(sys.argv[1], fname + ".txt"), "gtfs_" + fname, handlers[fname], use_copy):
+        for statement in import_file(os.path.join(sys.argv[1], fname + ".txt"), "gtfs_" + fname, handlers.get(fname), use_copy):
             print statement
 
     print "commit;"
