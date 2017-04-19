@@ -1,37 +1,63 @@
--- Add spatial support for PostGIS databases only
+begin;
 
--- Drop everything first
-DROP TABLE IF EXISTS gtfs_shape_geoms CASCADE;
+create table gtfs_shape_lengths as
+select shape_id, st_length(st_transform(the_geom, 2163)) as shape_dist from gtfs_shape_geoms;
 
-BEGIN;
--- Add the_geom column to the gtfs_stops table - a 2D point geometry
-SELECT AddGeometryColumn('gtfs_stops', 'the_geom', 4326, 'POINT', 2);
+commit;
 
--- Update the the_geom column
-UPDATE gtfs_stops SET the_geom = ST_SetSRID(ST_MakePoint(stop_lon, stop_lat), 4326);
+  -- This script uses PostGIS to fill in the shape_dist_traveled field using stop and shape geometries. 
+  -- It assumes that gtfs_tables_makespatial.sql has been run to build said geometries.
 
--- Create spatial index
-CREATE INDEX "gtfs_stops_the_geom_gist" ON "gtfs_stops" using gist ("the_geom" gist_geometry_ops_2d);
+  -- Create a table that contains stop distances along trip patterns, assuming that a pattern consists of
+  -- (a.route_id, direction_id, shape_id)
+  -- this is far more efficient than doing the geometry processing on every row in stop_times
 
--- Create new table to store the shape geometries
-CREATE TABLE gtfs_shape_geoms (
-  shape_id    text
-);
+drop table if exists gtfs_stop_distances_along_shape;
+drop table if exists gtfs_distinct_patterns;
 
--- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
-SELECT AddGeometryColumn('gtfs_shape_geoms', 'the_geom', 4326, 'LINESTRING', 2);
+begin;
 
--- Populate gtfs_shape_geoms
-INSERT INTO gtfs_shape_geoms
-SELECT shape.shape_id, ST_SetSRID(ST_MakeLine(shape.the_geom), 4326) As new_geom
-  FROM (
-    SELECT shape_id, ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
-    FROM gtfs_shapes 
-    ORDER BY shape_id, shape_pt_sequence
-  ) AS shape
-GROUP BY shape.shape_id;
+CREATE TABLE gtfs_distinct_patterns AS
+SELECT distinct t.route_id, t.direction_id, t.shape_id, st.stop_sequence, st.stop_id
+FROM gtfs_stop_times st
+INNER JOIN gtfs_trips t on st.trip_id = t.trip_id;
 
--- Create spatial index
-CREATE INDEX "gtfs_shape_geoms_the_geom_gist" ON "gtfs_shape_geoms" using gist ("the_geom" gist_geometry_ops_2d);
+CREATE TABLE gtfs_stop_distances_along_shape AS
+SELECT a.route_id,
+    direction_id,
+    shape_id,
+    stop_sequence,
+    stop_id,
+    round(cast(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape, 
+    ST_LineLocatePoint(route.the_geom, stop.the_geom) * st_length_spheroid(route.the_geom, 'SPHEROID["GRS_1980",6378137,298.257222101]') as dist_along_shape
+FROM gtfs_distinct_patterns a
+LEFT JOIN gtfs_shape_geoms AS route USING (shape_id)
+LEFT JOIN gtfs_stops as stop USING (stop_id); 
 
-COMMIT;
+commit;
+
+begin;
+  -- Use this table to create a second gtfs_stop_times table, using key above
+drop table IF EXISTS gtfs_stop_times2 cascade;
+commit;
+
+begin;
+create table gtfs_stop_times2 as
+select st.trip_id,
+    st.arrival_time,
+    st.departure_time,
+    st.stop_id,
+    st.stop_sequence,
+    a.dist_along_shape AS shape_dist_traveled
+FROM gtfs_stop_distances_along_shape AS a
+join gtfs_stop_times st on st.stop_id = a.stop_id
+join gtfs_trips t on st.trip_id = t.trip_id
+where
+      a.route_id = t.route_id
+    and a.direction_id= t.direction_id
+    and a.shape_id = t.shape_id 
+    and st.stop_sequence = a.stop_sequence
+    and a.stop_id = st.stop_id; 
+
+commit;
+
