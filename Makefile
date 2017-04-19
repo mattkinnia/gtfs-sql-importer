@@ -1,0 +1,8 @@
+
+DATABASE = 
+PSQLFLAGS = $(DATABASE) 
+PSQL = psql $(PSQLFLAGS)
+
+
+vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
+
