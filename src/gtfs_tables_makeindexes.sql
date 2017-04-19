@@ -1,5 +1,3 @@
-
-
 begin;
 
 ALTER TABLE gtfs_agency ADD CONSTRAINT agency_name_pkey 
@@ -22,6 +20,7 @@ ALTER TABLE gtfs_stops ADD CONSTRAINT stop_parent_fkey
       FOREIGN KEY (parent_station)
       REFERENCES gtfs_stops(stop_id);
 
+CREATE INDEX "gtfs_stops_the_geom_gist" ON "gtfs_stops" using gist ("the_geom" gist_geometry_ops_2d);
 
 ALTER TABLE gtfs_routes ADD CONSTRAINT routes_id_pkey
       PRIMARY KEY (route_id);
@@ -85,6 +84,8 @@ ALTER TABLE gtfs_shapes
       ALTER COLUMN shape_pt_lon SET NOT NULL;
 ALTER TABLE gtfs_shapes 
       ALTER COLUMN shape_pt_sequence SET NOT NULL;
+
+CREATE INDEX "gtfs_shape_geoms_the_geom_gist" ON "gtfs_shape_geoms" using gist ("the_geom" gist_geometry_ops_2d);
 
 ALTER TABLE gtfs_trips ADD CONSTRAINT trip_id_pkey
       PRIMARY KEY (trip_id);
@@ -152,6 +153,5 @@ ALTER TABLE gtfs_transfers ADD CONSTRAINT xfer_trid_fkey
 --ALTER TABLE gtfs_transfers ADD CONSTRAINT xfer_sid_fkey
 --      FOREIGN KEY (service_id)
 --      REFERENCES gtfs_calendar(service_id);
-
 
 commit;
