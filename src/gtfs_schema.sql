@@ -282,94 +282,65 @@ create table gtfs_transfer_types (
   description text
 );
 
-insert into gtfs_transfer_types (transfer_type, description)
-       values (0,'Preferred transfer point');
-insert into gtfs_transfer_types (transfer_type, description)
-       values (1,'Designated transfer point');
-insert into gtfs_transfer_types (transfer_type, description)
-       values (2,'Transfer possible with min_transfer_time window');
-insert into gtfs_transfer_types (transfer_type, description)
-       values (3,'Transfers forbidden');
+CREATE OR REPLACE FUNCTION gtfs_feed_info_update() RETURNS TRIGGER AS $func$
+  BEGIN
+    ALTER TABLE gtfs_calendar ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_stops ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_routes ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_calendar_dates ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_fare_attributes ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_fare_rules ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_shapes ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_trips ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_stop_times ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_frequencies ALTER feed_index SET DEFAULT NEW.feed_index;
+    ALTER TABLE gtfs_transfers ALTER feed_index SET DEFAULT NEW.feed_index;
+    RETURN NEW;
+  END;
+$func$ LANGUAGE plpgsql;
 
+CREATE TRIGGER gtfs_feed_info_update_trigger BEFORE INSERT ON gtfs_feed_info
+    FOR EACH ROW EXECUTE PROCEDURE gtfs_feed_info_update();
 
---related to gtfs_stops(location_type)
-create table gtfs_location_types (
-  location_type int PRIMARY KEY,
-  description text
-);
+insert into gtfs_transfer_types (transfer_type, description) VALUES
+  (0,'Preferred transfer point'),
+  (1,'Designated transfer point'),
+  (2,'Transfer possible with min_transfer_time window'),
+  (3,'Transfers forbidden');
 
-insert into gtfs_location_types(location_type, description)
-       values (0,'stop');
-insert into gtfs_location_types(location_type, description)
-       values (1,'station');
-insert into gtfs_location_types(location_type, description)
-       values (2,'station entrance');
+insert into gtfs_location_types(location_type, description) values 
+  (0,'stop'),
+  (1,'station'),
+  (2,'station entrance');
 
---related to gtfs_stops(wheelchair_boarding)
-create table gtfs_wheelchair_boardings (
-  wheelchair_boarding int PRIMARY KEY,
-  description text
-);
+insert into gtfs_wheelchair_boardings(wheelchair_boarding, description) values
+   (0, 'No accessibility information available for the stop'),
+   (1, 'At least some vehicles at this stop can be boarded by a rider in a wheelchair'),
+   (2, 'Wheelchair boarding is not possible at this stop');
 
-insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
-       values (0, 'No accessibility information available for the stop');
-insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
-       values (1, 'At least some vehicles at this stop can be boarded by a rider in a wheelchair');
-insert into gtfs_wheelchair_boardings(wheelchair_boarding, description)
-       values (2, 'Wheelchair boarding is not possible at this stop');
+insert into gtfs_wheelchair_accessible(wheelchair_accessible, description) values
+  (0, 'No accessibility information available for this trip'),
+  (1, 'The vehicle being used on this particular trip can accommodate at least one rider in a wheelchair'),
+  (2, 'No riders in wheelchairs can be accommodated on this trip');
 
---related to gtfs_stops(wheelchair_accessible)
-create table gtfs_wheelchair_accessible (
-  wheelchair_accessible int PRIMARY KEY,
-  description text
-);
+insert into gtfs_route_types (route_type, description) values
+  (0, 'Street Level Rail'),
+  (1, 'Underground Rail'),
+  (2, 'Intercity Rail'),
+  (3, 'Bus'),
+  (4, 'Ferry'),
+  (5, 'Cable Car'),
+  (6, 'Suspended Car'),
+  (7, 'Steep Incline Mode');
 
-insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
-        values (0, 'No accessibility information available for this trip');
-insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
-        values (1, 'The vehicle being used on this particular trip can accommodate at least one rider in a wheelchair');
-insert into gtfs_wheelchair_accessible(wheelchair_accessible, description)
-        values (2, 'No riders in wheelchairs can be accommodated on this trip');
+insert into gtfs_pickup_dropoff_types (type_id, description) values
+  (0,'Regularly Scheduled'),
+  (1,'Not available'),
+  (2,'Phone arrangement only'),
+  (3,'Driver arrangement only');
 
-create table gtfs_route_types (
-  route_type int PRIMARY KEY,
-  description text
-);
+insert into gtfs_payment_methods (payment_method, description) values
+  (0,'On Board'),
+  (1,'Prepay');
 
-insert into gtfs_route_types (route_type, description) values (0, 'Street Level Rail');
-insert into gtfs_route_types (route_type, description) values (1, 'Underground Rail');
-insert into gtfs_route_types (route_type, description) values (2, 'Intercity Rail');
-insert into gtfs_route_types (route_type, description) values (3, 'Bus');
-insert into gtfs_route_types (route_type, description) values (4, 'Ferry');
-insert into gtfs_route_types (route_type, description) values (5, 'Cable Car');
-insert into gtfs_route_types (route_type, description) values (6, 'Suspended Car');
-insert into gtfs_route_types (route_type, description) values (7, 'Steep Incline Mode');
-
-create table gtfs_directions (
-  direction_id int PRIMARY KEY,
-  description text
-);
-
-insert into gtfs_directions (direction_id, description) values (0,'This way');
-insert into gtfs_directions (direction_id, description) values (1,'That way');
-
-create table gtfs_pickup_dropoff_types (
-  type_id int PRIMARY KEY,
-  description text
-);
-
-insert into gtfs_pickup_dropoff_types (type_id, description) values (0,'Regularly Scheduled');
-insert into gtfs_pickup_dropoff_types (type_id, description) values (1,'Not available');
-insert into gtfs_pickup_dropoff_types (type_id, description) values (2,'Phone arrangement only');
-insert into gtfs_pickup_dropoff_types (type_id, description) values (3,'Driver arrangement only');
-
-create table gtfs_payment_methods (
-  payment_method int PRIMARY KEY,
-  description text
-);
-
-insert into gtfs_payment_methods (payment_method, description) values (0,'On Board');
-insert into gtfs_payment_methods (payment_method, description) values (1,'Prepay');
-
-
-commit;
+COMMIT;
