@@ -87,7 +87,7 @@ CREATE TABLE gtfs_calendar (
 -- CREATE INDEX gtfs_calendar_service_id ON gtfs_calendar (service_id);
 
 CREATE TABLE service_combinations (
-  feed_index int,
+  feed_index int NOT NULL,
   combination_id int REFERENCES service_combo_ids (combination_id),
   service_id text
   -- , CONSTRAINT service_combinations_service FOREIGN KEY (feed_index, service_id)
@@ -95,7 +95,7 @@ CREATE TABLE service_combinations (
 );
 
 CREATE TABLE gtfs_stops (
-  feed_index int,
+  feed_index int NOT NULL,
   stop_id text,
   stop_name text NOT NULL,
   stop_desc text,
@@ -136,7 +136,7 @@ CREATE TABLE gtfs_route_types (
 );
 
 CREATE TABLE gtfs_routes (
-  feed_index int,
+  feed_index int NOT NULL,
   route_id text,
   agency_id text,
   route_short_name text DEFAULT '',
@@ -152,7 +152,7 @@ CREATE TABLE gtfs_routes (
 );
 
 CREATE TABLE gtfs_calendar_dates (
-  feed_index int,
+  feed_index int NOT NULL,
   service_id text,
   date date NOT NULL,
   exception_type int NOT NULL
@@ -166,7 +166,7 @@ CREATE TABLE gtfs_payment_methods (
 );
 
 CREATE TABLE gtfs_fare_attributes (
-  feed_index int,
+  feed_index int NOT NULL,
   fare_id text,
   price double precision NOT NULL,
   currency_type text NOT NULL,
@@ -181,7 +181,7 @@ CREATE TABLE gtfs_fare_attributes (
 );
 
 CREATE TABLE gtfs_fare_rules (
-  feed_index int,
+  feed_index int NOT NULL,
   fare_id text,
   route_id text,
   origin_id text,
@@ -198,7 +198,7 @@ CREATE TABLE gtfs_fare_rules (
 );
 
 CREATE TABLE gtfs_shapes (
-  feed_index int,
+  feed_index int NOT NULL,
   shape_id text NOT NULL,
   shape_pt_lat double precision NOT NULL,
   shape_pt_lon double precision NOT NULL,
@@ -209,7 +209,8 @@ CREATE TABLE gtfs_shapes (
 
 -- Create new table to store the shape geometries
 CREATE TABLE gtfs_shape_geoms (
-  shape_id text
+  feed_index int NOT NULL,
+  shape_id text NOT NULL
 );
 -- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
 SELECT AddGeometryColumn('gtfs_shape_geoms', 'the_geom', 4326, 'LINESTRING', 2);
@@ -218,33 +219,42 @@ CREATE OR REPLACE FUNCTION gtfs_shape_update()
   RETURNS TRIGGER AS $shape_func$
   BEGIN
     IF TG_OP = 'INSERT' THEN
-      INSERT INTO gtfs_shape_geoms
-        SELECT
-          shape_id,
-          ST_SetSRID(ST_MakeLine(shape.the_geom), 4326) AS the_geom
+      INSERT INTO gtfs_shape_geoms SELECT
+        feed_index,
+        shape_id,
+        ST_SetSRID(ST_MakeLine(shape.the_geom), 4326) AS the_geom
       FROM (
         SELECT
+          s.feed_index,
           s.shape_id,
           ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
         FROM gtfs_shapes s
-          LEFT JOIN gtfs_shape_geoms sg ON (s.shape_id = sg.shape_id)
-        WHERE sg.shape_id IS NULL
+          LEFT JOIN gtfs_shape_geoms sg ON (
+            sg.feed_index = s.feed_index AND sg.shape_id = s.shape_id
+          )
+        WHERE the_geom IS NULL
         ORDER BY shape_id, shape_pt_sequence
       ) AS shape
-      GROUP BY shape.shape_id;
+      GROUP BY feed_index, shape.shape_id;
 
     ELSIF TG_OP = 'UPDATE' THEN
       UPDATE gtfs_shape_geoms
-        SET (shape_id, the_geom) = (shape_id, ST_SetSRID(ST_MakeLine(shape.the_geom), 4326))
+        SET (feed_index, shape_id, the_geom) = (
+          feed_index,
+          shape_id,
+          ST_SetSRID(ST_MakeLine(shape.the_geom), 4326)
+        )
       FROM (
-        SELECT * FROM (
-          SELECT
-            s.shape_id AS shape_id,
-            ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
-          FROM gtfs_shapes s
-          ORDER BY shape_id, shape_pt_sequence
-        ) AS shape GROUP BY shape_id
-      ) a;
+        SELECT
+          feed_index,
+          s.shape_id AS shape_id,
+          ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
+        FROM gtfs_shapes
+        GROUP BY feed_index, shape_id
+        ORDER BY shape_id, shape_pt_sequence
+      ) shape
+      WHERE shape.feed_index = gtfs_shape_geoms.feed_index
+        AND shape.shape_id = gtfs_shape_geoms.shape_id;
     END IF;
     RETURN NULL;
   END;
@@ -261,7 +271,7 @@ CREATE TRIGGER gtfs_shape_geom_trigger AFTER INSERT OR UPDATE ON gtfs_shapes
 -- this is far more efficient than doing the geometry processing on every row in stop_times
 
 CREATE TABLE gtfs_trips (
-  feed_index int,
+  feed_index int NOT NULL,
   route_id text,
   service_id text,
   trip_id text,
@@ -283,7 +293,7 @@ CREATE TABLE gtfs_trips (
 -- CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
 
 CREATE TABLE gtfs_stop_times (
-  feed_index int,
+  feed_index int NOT NULL,
   trip_id text,
   arrival_time text CHECK (arrival_time LIKE '__:__:__'),
   departure_time text CHECK (departure_time LIKE '__:__:__'),
@@ -328,7 +338,7 @@ CREATE OR REPLACE FUNCTION gtfs_pattern_update()
   BEGIN
     -- update based on new stop-time
     INSERT INTO gtfs_stop_distances_along_shape
-      (feed_index, route_id, direction_id, shape_id, stop_id, stop_sequence)
+      (feed_index, route_id, direction_id, shape_id, stop_id, stop_sequence, pct_along_shape, dist_along_shape)
       SELECT
         NEW.feed_index,
         t.route_id AS route_id,
@@ -340,14 +350,17 @@ CREATE OR REPLACE FUNCTION gtfs_pattern_update()
         ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_length_spheroid(
           route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]'
         ) as dist_along_shape
-      FROM gtfs_trips t,
+      FROM gtfs_trips t
+        LEFT JOIN gtfs_shape_geoms AS route ON (
+          t.feed_index = route.feed_index AND t.shape_id = route.shape_id
+        ),
         gtfs_stops as stop
-        LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
       WHERE
         t.feed_index = NEW.feed_index
+        AND stop.feed_index = NEW.feed_index
         AND t.trip_id = NEW.trip_id
-        AND stop.stop_id = NEW.stop_id
-        AND stop.feed_index = NEW.feed_index;
+        AND stop.stop_id = NEW.stop_id;
+  RETURN NULL;
   END;
 $shape_func$ LANGUAGE plpgsql;
 
@@ -355,7 +368,7 @@ CREATE TRIGGER gtfs_pattern_stop_times_trigger AFTER INSERT OR UPDATE ON gtfs_st
   FOR EACH ROW EXECUTE PROCEDURE gtfs_pattern_update();
 
 CREATE TABLE gtfs_frequencies (
-  feed_index int,
+  feed_index int NOT NULL,
   trip_id text,
   start_time text NOT NULL,
   end_time text NOT NULL,
@@ -369,7 +382,7 @@ CREATE TABLE gtfs_frequencies (
 );
 
 CREATE TABLE gtfs_transfers (
-  feed_index int,
+  feed_index int NOT NULL,
   from_stop_id text,
   to_stop_id text,
   transfer_type int REFERENCES gtfs_transfer_types(transfer_type),
@@ -402,27 +415,6 @@ CREATE TABLE gtfs_feed_info (
   feed_end_date date,
   feed_download_date date
 );
-
-CREATE OR REPLACE FUNCTION gtfs_feed_info_update() RETURNS TRIGGER AS $func$
-  BEGIN
-    RAISE NOTICE 'Setting default feed_index to: %', NEW.feed_index;
-    ALTER TABLE gtfs_calendar ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_stops ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_routes ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_calendar_dates ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_fare_attributes ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_fare_rules ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_shapes ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_trips ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_stop_times ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_frequencies ALTER feed_index SET DEFAULT NEW.feed_index;
-    ALTER TABLE gtfs_transfers ALTER feed_index SET DEFAULT NEW.feed_index;
-    RETURN NEW;
-  END;
-$func$ LANGUAGE plpgsql;
-
-CREATE TRIGGER gtfs_feed_info_update_trigger AFTER INSERT ON gtfs_feed_info
-    FOR EACH ROW EXECUTE PROCEDURE gtfs_feed_info_update();
 
 insert into gtfs_transfer_types (transfer_type, description) VALUES
   (0,'Preferred transfer point'),
