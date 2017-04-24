@@ -215,61 +215,6 @@ CREATE TABLE gtfs_shape_geoms (
 -- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
 SELECT AddGeometryColumn('gtfs_shape_geoms', 'the_geom', 4326, 'LINESTRING', 2);
 
-CREATE OR REPLACE FUNCTION gtfs_shape_update()
-  RETURNS TRIGGER AS $shape_func$
-  BEGIN
-    IF TG_OP = 'INSERT' THEN
-      INSERT INTO gtfs_shape_geoms SELECT
-        feed_index,
-        shape_id,
-        ST_SetSRID(ST_MakeLine(shape.the_geom), 4326) AS the_geom
-      FROM (
-        SELECT
-          s.feed_index,
-          s.shape_id,
-          ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
-        FROM gtfs_shapes s
-          LEFT JOIN gtfs_shape_geoms sg ON (
-            sg.feed_index = s.feed_index AND sg.shape_id = s.shape_id
-          )
-        WHERE the_geom IS NULL
-        ORDER BY shape_id, shape_pt_sequence
-      ) AS shape
-      GROUP BY feed_index, shape.shape_id;
-
-    ELSIF TG_OP = 'UPDATE' THEN
-      UPDATE gtfs_shape_geoms
-        SET (feed_index, shape_id, the_geom) = (
-          feed_index,
-          shape_id,
-          ST_SetSRID(ST_MakeLine(shape.the_geom), 4326)
-        )
-      FROM (
-        SELECT
-          feed_index,
-          s.shape_id AS shape_id,
-          ST_MakePoint(shape_pt_lon, shape_pt_lat) AS the_geom
-        FROM gtfs_shapes
-        GROUP BY feed_index, shape_id
-        ORDER BY shape_id, shape_pt_sequence
-      ) shape
-      WHERE shape.feed_index = gtfs_shape_geoms.feed_index
-        AND shape.shape_id = gtfs_shape_geoms.shape_id;
-    END IF;
-    RETURN NULL;
-  END;
-$shape_func$ LANGUAGE plpgsql;
-
-CREATE TRIGGER gtfs_shape_geom_trigger AFTER INSERT OR UPDATE ON gtfs_shapes
-  FOR EACH STATEMENT EXECUTE PROCEDURE gtfs_shape_update();
-
--- This script uses PostGIS to fill in the shape_dist_traveled field using stop and shape geometries. 
--- It assumes that gtfs_tables_makespatial.sql has been run to build said geometries.
-
--- Create a table that contains stop distances along trip patterns, assuming that a pattern consists of
--- (a.route_id, direction_id, shape_id)
--- this is far more efficient than doing the geometry processing on every row in stop_times
-
 CREATE TABLE gtfs_trips (
   feed_index int NOT NULL,
   route_id text,
@@ -332,40 +277,6 @@ CREATE TABLE gtfs_stop_distances_along_shape (
 );
 -- CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
 --   (route_id, direction_id, shape_id, stop_id, stop_sequence);
-
-CREATE OR REPLACE FUNCTION gtfs_pattern_update()
-  RETURNS TRIGGER AS $shape_func$
-  BEGIN
-    -- update based on new stop-time
-    INSERT INTO gtfs_stop_distances_along_shape
-      (feed_index, route_id, direction_id, shape_id, stop_id, stop_sequence, pct_along_shape, dist_along_shape)
-      SELECT
-        NEW.feed_index,
-        t.route_id AS route_id,
-        t.direction_id AS direction_id,
-        t.shape_id AS shape_id,
-        NEW.stop_id,
-        NEW.stop_sequence,
-        ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape,
-        ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_length_spheroid(
-          route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]'
-        ) as dist_along_shape
-      FROM gtfs_trips t
-        LEFT JOIN gtfs_shape_geoms AS route ON (
-          t.feed_index = route.feed_index AND t.shape_id = route.shape_id
-        ),
-        gtfs_stops as stop
-      WHERE
-        t.feed_index = NEW.feed_index
-        AND stop.feed_index = NEW.feed_index
-        AND t.trip_id = NEW.trip_id
-        AND stop.stop_id = NEW.stop_id;
-  RETURN NULL;
-  END;
-$shape_func$ LANGUAGE plpgsql;
-
-CREATE TRIGGER gtfs_pattern_stop_times_trigger AFTER INSERT OR UPDATE ON gtfs_stop_times
-  FOR EACH ROW EXECUTE PROCEDURE gtfs_pattern_update();
 
 CREATE TABLE gtfs_frequencies (
   feed_index int NOT NULL,
