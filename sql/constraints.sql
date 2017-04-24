@@ -5,20 +5,20 @@ ALTER TABLE gtfs_agency
   PRIMARY KEY (feed_index, agency_id);
 
 ALTER TABLE gtfs_calendar
-  ADD CONSTRAINT gtfs_calendar_unique
+  ADD CONSTRAINT gtfs_calendar_pkey
   PRIMARY KEY (feed_index, service_id);
 
 ALTER TABLE gtfs_stops
-  ADD CONSTRAINT gtfs_stops_unique
-  UNIQUE (feed_index, stop_id);
+  ADD CONSTRAINT gtfs_stops_pkey
+  PRIMARY KEY (feed_index, stop_id);
 
 ALTER TABLE gtfs_routes
   ADD CONSTRAINT gtfs_route_types_fkey
   FOREIGN KEY (route_type)
   REFERENCES gtfs_route_types (route_type);
 ALTER TABLE gtfs_routes
-  ADD CONSTRAINT gtfs_routes_unique
-  UNIQUE (feed_index, route_id);
+  ADD CONSTRAINT gtfs_routes_pkey
+  PRIMARY KEY (feed_index, route_id);
 ALTER TABLE gtfs_routes
   ADD CONSTRAINT gtfs_routes_fkey
   FOREIGN KEY (feed_index, agency_id)
@@ -29,9 +29,11 @@ ALTER TABLE gtfs_calendar_dates
   FOREIGN KEY (feed_index, service_id)
   REFERENCES gtfs_calendar (feed_index, service_id);
 
+CREATE INDEX gtfs_calendar_dates_dateidx ON gtfs_calendar_dates (date);
+
 ALTER TABLE gtfs_fare_attributes
-  ADD CONSTRAINT gtfs_fare_attributes_unique
-  UNIQUE (feed_index, fare_id);
+  ADD CONSTRAINT gtfs_fare_attributes_pkey
+  PRIMARY KEY (feed_index, fare_id);
 ALTER TABLE gtfs_fare_attributes
   ADD CONSTRAINT gtfs_fare_attributes_fkey
   FOREIGN KEY (feed_index, agency_id)
@@ -50,11 +52,11 @@ ALTER TABLE gtfs_fare_rules
   FOREIGN KEY (feed_index, route_id)
   REFERENCES gtfs_routes (feed_index, route_id);
 
-CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
+CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (feed_index, shape_id);
 
 ALTER TABLE gtfs_trips
-  ADD CONSTRAINT gtfs_trips_unique
-  UNIQUE (feed_index, trip_id);
+  ADD CONSTRAINT gtfs_trips_pkey
+  PRIMARY KEY (feed_index, trip_id);
 ALTER TABLE gtfs_trips
   ADD CONSTRAINT gtfs_trips_route_id_fkey
   FOREIGN KEY (feed_index, route_id)
@@ -64,32 +66,32 @@ ALTER TABLE gtfs_trips
   FOREIGN KEY (feed_index, service_id)
   REFERENCES gtfs_calendar (feed_index, service_id);
 
-CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
-
 ALTER TABLE gtfs_stop_times
-  ADD CONSTRAINT gtfs_stop_times_unique
-    UNIQUE (feed_index, trip_id, stop_id)
+  ADD CONSTRAINT gtfs_stop_times_pkey
+  PRIMARY KEY (feed_index, trip_id, stop_sequence);
+ALTER TABLE gtfs_stop_times
   ADD CONSTRAINT gtfs_stop_times_trips_fkey
-    FOREIGN KEY (feed_index, trip_id)
-    REFERENCES gtfs_trips (feed_index, trip_id)
+  FOREIGN KEY (feed_index, trip_id)
+  REFERENCES gtfs_trips (feed_index, trip_id);
+ALTER TABLE gtfs_stop_times
   ADD CONSTRAINT gtfs_stop_times_stops_fkey
-    FOREIGN KEY (feed_index, stop_id)
-    REFERENCES gtfs_stops (feed_index, stop_id);
+  FOREIGN KEY (feed_index, stop_id)
+  REFERENCES gtfs_stops (feed_index, stop_id);
 
 CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
 CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
 CREATE INDEX gtfs_stop_dist_along_shape_index
-  ON gtfs_stop_distances_along_shape
-  (route_id, direction_id, shape_id, stop_id, stop_sequence);
+  ON gtfs_stop_distances_along_shape (feed_index, shape_id, stop_id);
 
 ALTER TABLE gtfs_frequencies
-  ADD CONSTRAINT gtfs_frequencies_unique
-    UNIQUE (feed_index, trip_id, start_time)
+  ADD CONSTRAINT gtfs_frequencies_pkey
+  PRIMARY KEY (feed_index, trip_id, start_time);
+ALTER TABLE gtfs_frequencies
   ADD CONSTRAINT gtfs_frequencies_trip_fkey
-    FOREIGN KEY (feed_index, trip_id)
-    REFERENCES gtfs_trips (feed_index, trip_id);
+  FOREIGN KEY (feed_index, trip_id)
+  REFERENCES gtfs_trips (feed_index, trip_id);
 
 ALTER TABLE gtfs_transfers
   ADD CONSTRAINT gtfs_transfers_from_stop_fkey

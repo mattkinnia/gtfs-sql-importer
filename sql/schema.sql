@@ -310,7 +310,7 @@ CREATE TABLE gtfs_stop_times (
 
   arrival_time_seconds int,
   departure_time_seconds int
-  --, CONSTRAINT gtfs_stop_times_unique UNIQUE (feed_index, trip_id, stop_id),
+  --, CONSTRAINT gtfs_stop_times_unique UNIQUE (feed_index, trip_id, stop_sequence),
   -- CONSTRAINT gtfs_stop_times_trips_fkey FOREIGN KEY (feed_index, trip_id)
   -- REFERENCES gtfs_trips (feed_index, trip_id),
   -- CONSTRAINT gtfs_stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)

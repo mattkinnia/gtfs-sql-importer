@@ -16,7 +16,8 @@ ALTER TABLE gtfs_calendar DROP CONSTRAINT gtfs_calendar_unique CASCADE;
 ALTER TABLE gtfs_stops DROP CONSTRAINT gtfs_stops_unique CASCADE;
 
 ALTER TABLE gtfs_routes
-    DROP CONSTRAINT gtfs_route_types_fkey CASCADE
+    DROP CONSTRAINT gtfs_route_types_fkey CASCADE;
+ALTER TABLE gtfs_routes
     DROP CONSTRAINT gtfs_routes_unique CASCADE;
 
 ALTER TABLE gtfs_fare_attributes
