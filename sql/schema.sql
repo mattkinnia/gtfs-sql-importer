@@ -96,7 +96,7 @@ CREATE TABLE service_combinations (
 
 CREATE TABLE gtfs_stops (
   feed_index int NOT NULL,
-  stop_id text,
+  stop_id integer,
   stop_name text NOT NULL,
   stop_desc text,
   stop_lat double precision,
@@ -242,7 +242,7 @@ CREATE TABLE gtfs_stop_times (
   trip_id text,
   arrival_time text CHECK (arrival_time LIKE '__:__:__'),
   departure_time text CHECK (departure_time LIKE '__:__:__'),
-  stop_id text,
+  stop_id integer,
   stop_sequence int NOT NULL,
   stop_headsign text,
   pickup_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
@@ -270,7 +270,7 @@ CREATE TABLE gtfs_stop_distances_along_shape (
   route_id text,
   direction_id int REFERENCES gtfs_directions(direction_id),
   shape_id text,
-  stop_id text,
+  stop_id integer,
   stop_sequence int NOT NULL,
   pct_along_shape numeric,
   dist_along_shape numeric
@@ -294,8 +294,8 @@ CREATE TABLE gtfs_frequencies (
 
 CREATE TABLE gtfs_transfers (
   feed_index int NOT NULL,
-  from_stop_id text,
-  to_stop_id text,
+  from_stop_id integer,
+  to_stop_id integer,
   transfer_type int REFERENCES gtfs_transfer_types(transfer_type),
   min_transfer_time int,
   -- Unofficial fields
