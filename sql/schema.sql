@@ -276,7 +276,7 @@ CREATE TABLE gtfs_stop_distances_along_shape (
   dist_along_shape numeric
 );
 -- CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
---   (route_id, direction_id, shape_id, stop_id, stop_sequence);
+--   (feed_index, shape_id);
 
 CREATE TABLE gtfs_frequencies (
   feed_index int NOT NULL,
