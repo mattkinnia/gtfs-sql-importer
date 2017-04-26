@@ -58,31 +58,3 @@ From this directory (assuming postgres):
       vacuumer.sql \
     | psql testgtfs
     psql testgtfs -c "\dt"
-
-# Special Cases
-
-## SQLite
-Contributed by Justin Jones, Feb 07, 2011  bjustjones@netscape.net
-
-### Initial Import
-Note:
-  From http://www.sqlite.org/omitted.html as of Feb, 2011:
-    "Only the RENAME TABLE and ADD COLUMN variants of the ALTER TABLE command 
-    are supported. Other kinds of ALTER TABLE operations such as DROP COLUMN, 
-    ALTER COLUMN, ADD CONSTRAINT, and so forth are omitted."
-
-  gtfs_tables.sqlite includes the constraints on creation. 
-
-    cat gtfs_tables.sqlite \
-      <(python import_gtfs_to_sql.py sample_feed nocopy)  \
-    | sqlite3 ANewDatabase.db
-
-SQLite doesn't enforce constraints by default. See first section of 
-gtfs_tables.sqlite for line to change. Move it to the end?
-If you need to makeindices or dropindices as above you'll have to experiment
-with doing it yourself.
-
-### Modification within SQL Database
-    sqlite3 -init gtfs_tables_dropindexes.sqlite myDatabase.db
-    # do your stuff
-    sqlite3 -init gtfs_tables_makeindexes.sqlite myDatabase.db
