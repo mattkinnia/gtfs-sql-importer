@@ -20,22 +20,21 @@ GROUP BY feed_index, shape_id;
 
 INSERT INTO gtfs_stop_distances_along_shape
   (feed_index, route_id, direction_id, shape_id, stop_id, stop_sequence, pct_along_shape, dist_along_shape)
-  SELECT
-    feed_index,
-    t.route_id AS route_id,
-    t.direction_id AS direction_id,
-    t.shape_id AS shape_id,
-    st.stop_id,
-    st.stop_sequence,
-    ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape,
-    ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_length_spheroid(
-      route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]'
-    ) as NUMERIC), 1) as dist_along_shape
-  FROM gtfs_trips t
-    LEFT JOIN gtfs_stop_times st USING (feed_index, trip_id)
-    LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
-    LEFT JOIN gtfs_stops as stop USING (feed_index, stop_id)
-  WHERE
-    t.feed_index = (SELECT MAX(feed_index) FROM gtfs_feed_info);
-
-COMMIT;
+SELECT DISTINCT
+  feed_index,
+  shape_id,
+  stop_id,
+  ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape,
+  ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_length_spheroid(
+    route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]'
+  ) as NUMERIC), 1) as dist_along_shape
+FROM
+  (
+    SELECT DISTINCT
+      feed_index, shape_id, stop_id
+    FROM gtfs_stop_times st
+      LEFT JOIN gtfs_trips t USING (feed_index, trip_id)
+    WHERE feed_index = (SELECT MAX(feed_index) FROM gtfs_feed_info)
+  ) a
+  LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
+  LEFT JOIN gtfs_stops as stop USING (feed_index, stop_id);

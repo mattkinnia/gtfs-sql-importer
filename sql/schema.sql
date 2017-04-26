@@ -267,11 +267,8 @@ CREATE TABLE gtfs_stop_times (
 
 CREATE TABLE gtfs_stop_distances_along_shape (
   feed_index integer,
-  route_id text,
-  direction_id int REFERENCES gtfs_directions(direction_id),
   shape_id text,
   stop_id integer,
-  stop_sequence int NOT NULL,
   pct_along_shape numeric,
   dist_along_shape numeric
 );
