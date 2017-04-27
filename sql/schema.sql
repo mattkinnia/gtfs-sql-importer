@@ -33,8 +33,8 @@ CREATE TABLE gtfs_agency (
   agency_timezone text,
   agency_lang text,
   agency_phone text,
-  agency_fare_url text
-  -- , CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
+  agency_fare_url text,
+  CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
 );
 
 --related to gtfs_stops(wheelchair_accessible)
@@ -81,10 +81,10 @@ CREATE TABLE gtfs_calendar (
   saturday int NOT NULL,
   sunday int NOT NULL,
   start_date date NOT NULL,
-  end_date date NOT NULL
-  -- , CONSTRAINT gtfs_calendar_unique PRIMARY KEY (feed_index, service_id)
+  end_date date NOT NULL,
+  CONSTRAINT gtfs_calendar_pkey PRIMARY KEY (feed_index, service_id)
 );
--- CREATE INDEX gtfs_calendar_service_id ON gtfs_calendar (service_id);
+CREATE INDEX gtfs_calendar_service_id ON gtfs_calendar (service_id);
 
 CREATE TABLE service_combinations (
   feed_index int NOT NULL,
@@ -114,8 +114,8 @@ CREATE TABLE gtfs_stops (
   location_type text,
   direction text,
   position text,
-  parent_station text
-  -- , CONSTRAINT gtfs_stops_unique UNIQUE (feed_index, stop_id)
+  parent_station text,
+  CONSTRAINT gtfs_stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
 SELECT AddGeometryColumn('gtfs_stops', 'the_geom', 4326, 'POINT', 2);
 
@@ -145,9 +145,9 @@ CREATE TABLE gtfs_routes (
   route_type int REFERENCES gtfs_route_types(route_type),
   route_url text,
   route_color text,
-  route_text_color text
-  -- , CONSTRAINT gtfs_routes_unique UNIQUE (feed_index, route_id),
-  -- CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
+  route_text_color text,
+  CONSTRAINT gtfs_routes_pkey PRIMARY KEY (feed_index, route_id)
+  --, CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
   --   REFERENCES gtfs_agency (feed_index, agency_id)
 );
 
@@ -174,9 +174,9 @@ CREATE TABLE gtfs_fare_attributes (
   transfers int,
   transfer_duration int,
   -- unofficial features
-  agency_id text
-  --, CONSTRAINT gtfs_fare_attributes_unique UNIQUE (feed_index, fare_id),
-  -- CONSTRAINT gtfs_fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
+  agency_id text,
+  CONSTRAINT gtfs_fare_attributes_pkey PRIMARY KEY (feed_index, fare_id)
+  --, CONSTRAINT gtfs_fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
   -- REFERENCES gtfs_agency (feed_index, agency_id)
 );
 
@@ -205,7 +205,7 @@ CREATE TABLE gtfs_shapes (
   shape_pt_sequence int NOT NULL
 );
 
--- CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
+CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
 
 -- Create new table to store the shape geometries
 CREATE TABLE gtfs_shape_geoms (
@@ -228,14 +228,14 @@ CREATE TABLE gtfs_trips (
   wheelchair_accessible int REFERENCES gtfs_wheelchair_accessible(wheelchair_accessible),
 
   -- unofficial features
-  trip_type text
-  --, CONSTRAINT gtfs_trips_unique UNIQUE (feed_index, trip_id),
-  -- CONSTRAINT gtfs_trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
+  trip_type text,
+  CONSTRAINT gtfs_trips_pkey PRIMARY KEY (feed_index, trip_id)
+  --, CONSTRAINT gtfs_trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
   -- REFERENCES gtfs_routes (feed_index, route_id),
   -- CONSTRAINT gtfs_trips_calendar_fkey FOREIGN KEY (feed_index, service_id)
   -- REFERENCES gtfs_calendar (feed_index, service_id)
 );
--- CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
+CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
 
 CREATE TABLE gtfs_stop_times (
   feed_index int NOT NULL,
@@ -272,8 +272,8 @@ CREATE TABLE gtfs_stop_distances_along_shape (
   pct_along_shape numeric,
   dist_along_shape numeric
 );
--- CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
---   (feed_index, shape_id);
+CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
+  (feed_index, shape_id);
 
 CREATE TABLE gtfs_frequencies (
   feed_index int NOT NULL,
@@ -283,9 +283,9 @@ CREATE TABLE gtfs_frequencies (
   headway_secs int NOT NULL,
   exact_times int,
   start_time_seconds int,
-  end_time_seconds int
-  --, CONSTRAINT gtfs_frequencies_unique UNIQUE (feed_index, trip_id, start_time),
-  --CONSTRAINT gtfs_frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
+  end_time_seconds int,
+  CONSTRAINT gtfs_frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time)
+  --, CONSTRAINT gtfs_frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
   --  REFERENCES gtfs_trips (feed_index, trip_id)
 );
 
