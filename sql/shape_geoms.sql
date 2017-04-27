@@ -4,11 +4,9 @@ INSERT INTO gtfs_shape_geoms (feed_index, shape_id, the_geom)
 SELECT
   feed_index,
   shape_id,
-  ST_SetSRID(ST_MakeLine(ST_MakePoint(shape_pt_lon, shape_pt_lat)), 4326) AS the_geom
-FROM (
-  SELECT * FROM gtfs_shapes ORDER BY shape_id, shape_pt_sequence
-) shape
-WHERE shape.feed_index = (SELECT MAX(feed_index) FROM gtfs_feed_info)
+  ST_SetSRID(ST_MakeLine(array_agg(ST_MakePoint(shape_pt_lon, shape_pt_lat) ORDER BY shape_pt_sequence)), 4326)
+FROM gtfs_shapes
+  WHERE feed_index = (SELECT MAX(feed_index) FROM gtfs_feed_info)
 GROUP BY feed_index, shape_id;
 
 -- This script uses PostGIS to fill in the shape_dist_traveled field using stop and shape geometries. 
@@ -19,7 +17,7 @@ GROUP BY feed_index, shape_id;
 -- this is far more efficient than doing the geometry processing on every row in stop_times
 
 INSERT INTO gtfs_stop_distances_along_shape
-  (feed_index, route_id, direction_id, shape_id, stop_id, stop_sequence, pct_along_shape, dist_along_shape)
+  (feed_index, shape_id, stop_id, pct_along_shape, dist_along_shape)
 SELECT DISTINCT
   feed_index,
   shape_id,
