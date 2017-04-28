@@ -25,6 +25,18 @@ DROP TABLE IF EXISTS gtfs_stop_distances_along_shape;
 
 BEGIN;
 
+CREATE TABLE gtfs_feed_info (
+  feed_index serial PRIMARY KEY, -- tracks uploads, avoids key collisions
+  feed_publisher_name text,
+  feed_publisher_url text,
+  feed_timezone text,
+  feed_lang text,
+  feed_version text,
+  feed_start_date date,
+  feed_end_date date,
+  feed_download_date date,
+);
+
 CREATE TABLE gtfs_agency (
   feed_index integer,
   agency_id text,
@@ -34,7 +46,8 @@ CREATE TABLE gtfs_agency (
   agency_lang text,
   agency_phone text,
   agency_fare_url text,
-  CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
+  CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id),
+  CONSTRAINT gtfs_agency_feed_fkey FOREIGN KEY REFERENCES gtfs_feed_info (feed_index)
 );
 
 --related to gtfs_stops(wheelchair_accessible)
@@ -82,16 +95,20 @@ CREATE TABLE gtfs_calendar (
   sunday int NOT NULL,
   start_date date NOT NULL,
   end_date date NOT NULL,
-  CONSTRAINT gtfs_calendar_pkey PRIMARY KEY (feed_index, service_id)
+  CONSTRAINT gtfs_calendar_pkey PRIMARY KEY (feed_index, service_id),
+  CONSTRAINT gtfs_calendar_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 CREATE INDEX gtfs_calendar_service_id ON gtfs_calendar (service_id);
 
-CREATE TABLE service_combinations (
+CREATE TABLE gtfs_service_combinations (
   feed_index int NOT NULL,
   combination_id int REFERENCES service_combo_ids (combination_id),
-  service_id text
-  -- , CONSTRAINT service_combinations_service FOREIGN KEY (feed_index, service_id)
+  service_id text,
+  -- CONSTRAINT service_combinations_service FOREIGN KEY (feed_index, service_id)
   --  REFERENCES gtfs_calendar (feed_index, service_id)
+  CONSTRAINT gtfs_service_combo_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 CREATE TABLE gtfs_stops (
@@ -146,18 +163,20 @@ CREATE TABLE gtfs_routes (
   route_url text,
   route_color text,
   route_text_color text,
-  CONSTRAINT gtfs_routes_pkey PRIMARY KEY (feed_index, route_id)
-  --, CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
-  --   REFERENCES gtfs_agency (feed_index, agency_id)
+  CONSTRAINT gtfs_routes_pkey PRIMARY KEY (feed_index, route_id),
+  -- CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
+  --   REFERENCES gtfs_agency (feed_index, agency_id),
+  CONSTRAINT gtfs_routes_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 CREATE TABLE gtfs_calendar_dates (
   feed_index int NOT NULL,
   service_id text,
   date date NOT NULL,
-  exception_type int NOT NULL
-  --, CONSTRAINT gtfs_calendar_fkey FOREIGN KEY (feed_index, service_id)
-  --   REFERENCES gtfs_calendar (feed_index, service_id)
+  exception_type int NOT NULL,
+  -- CONSTRAINT gtfs_calendar_fkey FOREIGN KEY (feed_index, service_id)
+    REFERENCES gtfs_calendar (feed_index, service_id)
 );
 
 CREATE TABLE gtfs_payment_methods (
@@ -175,9 +194,11 @@ CREATE TABLE gtfs_fare_attributes (
   transfer_duration int,
   -- unofficial features
   agency_id text,
-  CONSTRAINT gtfs_fare_attributes_pkey PRIMARY KEY (feed_index, fare_id)
-  --, CONSTRAINT gtfs_fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
-  -- REFERENCES gtfs_agency (feed_index, agency_id)
+  CONSTRAINT gtfs_fare_attributes_pkey PRIMARY KEY (feed_index, fare_id),
+  -- CONSTRAINT gtfs_fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
+  -- REFERENCES gtfs_agency (feed_index, agency_id),
+  CONSTRAINT gtfs_fare_attributes_fare_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 CREATE TABLE gtfs_fare_rules (
@@ -188,13 +209,15 @@ CREATE TABLE gtfs_fare_rules (
   destination_id text,
   contains_id text,
   -- unofficial features
-  service_id text
-  --, CONSTRAINT gtfs_fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
+  service_id text,
+  -- CONSTRAINT gtfs_fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
   -- REFERENCES gtfs_calendar (feed_index, service_id),
   -- CONSTRAINT gtfs_fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
   -- REFERENCES gtfs_fare_attributes (feed_index, fare_id),
   -- CONSTRAINT gtfs_fare_rules_route_id_fkey FOREIGN KEY (feed_index, route_id)
-  -- REFERENCES gtfs_routes (feed_index, route_id)
+  -- REFERENCES gtfs_routes (feed_index, route_id),
+  CONSTRAINT gtfs_fare_rules_service_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 CREATE TABLE gtfs_shapes (
@@ -229,11 +252,13 @@ CREATE TABLE gtfs_trips (
 
   -- unofficial features
   trip_type text,
-  CONSTRAINT gtfs_trips_pkey PRIMARY KEY (feed_index, trip_id)
-  --, CONSTRAINT gtfs_trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
+  CONSTRAINT gtfs_trips_pkey PRIMARY KEY (feed_index, trip_id),
+  -- CONSTRAINT gtfs_trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
   -- REFERENCES gtfs_routes (feed_index, route_id),
   -- CONSTRAINT gtfs_trips_calendar_fkey FOREIGN KEY (feed_index, service_id)
-  -- REFERENCES gtfs_calendar (feed_index, service_id)
+  -- REFERENCES gtfs_calendar (feed_index, service_id),
+  CONSTRAINT gtfs_trips_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
 
@@ -254,16 +279,18 @@ CREATE TABLE gtfs_stop_times (
   -- the following are not in the spec
 
   arrival_time_seconds int,
-  departure_time_seconds int
-  --, CONSTRAINT gtfs_stop_times_unique UNIQUE (feed_index, trip_id, stop_sequence),
+  departure_time_seconds int,
+  CONSTRAINT gtfs_stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence),
   -- CONSTRAINT gtfs_stop_times_trips_fkey FOREIGN KEY (feed_index, trip_id)
   -- REFERENCES gtfs_trips (feed_index, trip_id),
   -- CONSTRAINT gtfs_stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)
-  -- REFERENCES gtfs_stops (feed_index, stop_id)
+  -- REFERENCES gtfs_stops (feed_index, stop_id),
+  CONSTRAINT gtfs_stop_times_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
--- CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
--- CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
--- CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
+CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
+CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
+CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
 CREATE TABLE gtfs_stop_distances_along_shape (
   feed_index integer,
@@ -284,9 +311,11 @@ CREATE TABLE gtfs_frequencies (
   exact_times int,
   start_time_seconds int,
   end_time_seconds int,
-  CONSTRAINT gtfs_frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time)
-  --, CONSTRAINT gtfs_frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
-  --  REFERENCES gtfs_trips (feed_index, trip_id)
+  CONSTRAINT gtfs_frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time),
+  -- CONSTRAINT gtfs_frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
+  --  REFERENCES gtfs_trips (feed_index, trip_id),
+  CONSTRAINT gtfs_frequencies_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 CREATE TABLE gtfs_transfers (
@@ -298,8 +327,8 @@ CREATE TABLE gtfs_transfers (
   -- Unofficial fields
   from_route_id text,
   to_route_id text,
-  service_id text
-  --, CONSTRAINT gtfs_transfers_from_stop_fkey FOREIGN KEY (feed_index, from_stop_id)
+  service_id text,
+  -- CONSTRAINT gtfs_transfers_from_stop_fkey FOREIGN KEY (feed_index, from_stop_id)
   --  REFERENCES gtfs_stops (feed_index, stop_id),
   --CONSTRAINT gtfs_transfers_to_stop_fkey FOREIGN KEY (feed_index, to_stop_id)
   --  REFERENCES gtfs_stops (feed_index, stop_id),
@@ -308,20 +337,9 @@ CREATE TABLE gtfs_transfers (
   --CONSTRAINT gtfs_transfers_to_route_fkey FOREIGN KEY (feed_index, to_route_id)
   --  REFERENCES gtfs_routes (feed_index, route_id),
   --CONSTRAINT gtfs_transfers_service_fkey FOREIGN KEY (feed_index, service_id)
-  --  REFERENCES gtfs_calendar (feed_index, service_id)
-);
-
--- tracks uploads, avoids key collisions
-CREATE TABLE gtfs_feed_info (
-  feed_index serial primary key,
-  feed_publisher_name text,
-  feed_publisher_url text,
-  feed_timezone text,
-  feed_lang text,
-  feed_version text,
-  feed_start_date date,
-  feed_end_date date,
-  feed_download_date date
+  --  REFERENCES gtfs_calendar (feed_index, service_id),
+  CONSTRAINT gtfs_transfers_feed_fkey FOREIGN KEY (feed_index)
+    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 
 insert into gtfs_transfer_types (transfer_type, description) VALUES
