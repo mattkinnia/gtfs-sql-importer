@@ -19,16 +19,16 @@ function import_stdin()
     unzip -p "$ZIP" "${1}.txt" | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
 }
 
+ADD_DATES=
 # Insert feed info
 if [[ "${FILES/feed_info}" != "$FILES" ]]; then
     # Contains feed info, so load that into the table
     import_stdin "feed_info"
 else
+    ADD_DATES=true
     # get the min and max calendar dates for this
-    start_date=$(unzip -p "$ZIP" calendar.txt | python -c "import csv, sys; print(min(row['start_date'] for row in csv.DictReader(sys.stdin)))")
-    end_date=$(unzip -p "$ZIP" calendar.txt | python -c "import csv, sys; print(max(row['end_date'] for row in csv.DictReader(sys.stdin)))")
     echo "INSERT INTO gtfs_feed_info" 1>&2
-    psql ${PSQLFLAGS} -c "INSERT INTO gtfs_feed_info (feed_start_date, feed_end_date) VALUES ('${start_date}'::date, '${end_date}'::date);"
+    psql ${PSQLFLAGS} -c "INSERT INTO gtfs_feed_info (feed_file) VALUES ('$1');"
 fi
 
 # Save the current feed_index
@@ -49,3 +49,10 @@ for table in $TABLES; do
         psql ${PSQLFLAGS} -c "ALTER TABLE gtfs_${table} ALTER COLUMN feed_index DROP DEFAULT"
     fi
 done
+
+if [ -n "$ADD_DATES" ]; then
+    echo "UPDATE gtfs_feed_info"
+    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_start_date=start, feed_end_date=end FROM (SELECT MIN(start_date) start, MAX(end_date) end FROM gtfs_calendar WHERE feed_index=${feed_index}) a WHERE feed_index = ${feed_index})"
+else
+    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_file ='$1' WHERE feed_index = ${feed_index}"
+fi

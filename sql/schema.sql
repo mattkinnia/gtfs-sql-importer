@@ -35,6 +35,7 @@ CREATE TABLE gtfs_feed_info (
   feed_start_date date,
   feed_end_date date,
   feed_download_date date,
+  feed_file text
 );
 
 CREATE TABLE gtfs_agency (
