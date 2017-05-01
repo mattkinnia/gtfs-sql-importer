@@ -105,7 +105,7 @@ CREATE TABLE gtfs_service_combinations (
   feed_index int NOT NULL,
   combination_id int REFERENCES service_combo_ids (combination_id),
   service_id text,
-  -- CONSTRAINT service_combinations_service FOREIGN KEY (feed_index, service_id)
+  -- CONSTRAINT service_combinations_service_fkey FOREIGN KEY (feed_index, service_id)
   --  REFERENCES gtfs_calendar (feed_index, service_id)
   CONSTRAINT gtfs_service_combo_feed_fkey FOREIGN KEY (feed_index)
     REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
@@ -179,6 +179,8 @@ CREATE TABLE gtfs_calendar_dates (
     REFERENCES gtfs_calendar (feed_index, service_id)
 );
 
+CREATE INDEX gtfs_calendar_dates_dateidx ON gtfs_calendar_dates (date);
+
 CREATE TABLE gtfs_payment_methods (
   payment_method int PRIMARY KEY,
   description text
@@ -233,7 +235,8 @@ CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
 -- Create new table to store the shape geometries
 CREATE TABLE gtfs_shape_geoms (
   feed_index int NOT NULL,
-  shape_id text NOT NULL
+  shape_id text NOT NULL,
+  CONSTRAINT gtfs_shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
 -- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
 SELECT AddGeometryColumn('gtfs_shape_geoms', 'the_geom', 4326, 'LINESTRING', 2);
@@ -260,7 +263,9 @@ CREATE TABLE gtfs_trips (
   CONSTRAINT gtfs_trips_feed_fkey FOREIGN KEY (feed_index)
     REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
+
 CREATE INDEX gtfs_trips_trip_id ON gtfs_trips (trip_id);
+CREATE INDEX gtfs_trips_service_id ON gtfs_trips (feed_index, service_id);
 
 CREATE TABLE gtfs_stop_times (
   feed_index int NOT NULL,

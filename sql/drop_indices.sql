@@ -14,6 +14,8 @@ ALTER TABLE gtfs_agency DROP CONSTRAINT gtfs_agency_pkey CASCADE;
 
 ALTER TABLE gtfs_calendar DROP CONSTRAINT gtfs_calendar_pkey CASCADE;
 
+DROP INDEX gtfs_calendar_service_id_key;
+
 ALTER TABLE gtfs_stops DROP CONSTRAINT gtfs_stops_pkey CASCADE;
 
 ALTER TABLE gtfs_routes
@@ -27,6 +29,8 @@ ALTER TABLE gtfs_fare_attributes
 
 ALTER TABLE gtfs_trips
   DROP CONSTRAINT gtfs_trips_pkey;
+
+DROP INDEX gtfs_trips_service_id;
 
 ALTER TABLE gtfs_frequencies
   DROP CONSTRAINT gtfs_frequencies_pkey;
