@@ -34,6 +34,6 @@ load: $(GTFS)
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
 
 init: sql/schema.sql
-	createdb $(DATABASE) || echo ''
+	-createdb $(DATABASE) && $(PSQL) -c "CREATE EXTENSION postgis"
 	$(PSQL) -f $<
 	$(PSQL) -f sql/constraints.sql
