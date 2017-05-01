@@ -21,10 +21,14 @@ files = agency \
 
 .PHONY: load vacuum init
 
-load: $(GTFS)
+drop_constraints:
 	$(PSQL) -f sql/drop_constraints.sql
-	sh load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
+
+add_constraints:
 	$(PSQL) -f sql/constraints.sql
+
+load: $(GTFS)
+	sh load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
 	$(PSQL) -f sql/shape_geoms.sql
 
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
