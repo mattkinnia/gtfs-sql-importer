@@ -52,7 +52,7 @@ done
 
 if [ -n "$ADD_DATES" ]; then
     echo "UPDATE gtfs_feed_info"
-    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_start_date=start, feed_end_date=end FROM (SELECT MIN(start_date) start, MAX(end_date) end FROM gtfs_calendar WHERE feed_index=${feed_index}) a WHERE feed_index = ${feed_index})"
+    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_start_date=s, feed_end_date=e FROM (SELECT MIN(start_date) AS s, MAX(end_date) AS e FROM gtfs_calendar WHERE feed_index=${feed_index}) a WHERE feed_index = ${feed_index})"
 else
     psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_file ='$1' WHERE feed_index = ${feed_index}"
 fi
