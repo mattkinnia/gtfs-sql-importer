@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TABLES="agency calendar calendar_dates routes shapes stop_times stops trips transfers frequencies feed_info fare_attributes fare_rules"
+TABLES="agency calendar calendar_dates routes shapes stop_times stops trips transfers frequencies fare_attributes fare_rules"
 
 # takes two arguments
 # A zip file containing gtfs files:
@@ -16,17 +16,20 @@ function import_stdin()
     local hed
     hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1)
     echo "COPY gtfs_${1}" 1>&2
-    unzip -p "$ZIP" "${1}.txt" | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
+    # Remove empty double quotes
+    unzip -p "$ZIP" "${1}.txt" | sed 's/""//g' | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
 }
 
 ADD_DATES=
 # Insert feed info
 if [[ "${FILES/feed_info}" != "$FILES" ]]; then
     # Contains feed info, so load that into the table
+    echo "Loading feed_info from dataset"
     import_stdin "feed_info"
 else
     ADD_DATES=true
     # get the min and max calendar dates for this
+    echo "No feed_info file found, constructing one"
     echo "INSERT INTO gtfs_feed_info" 1>&2
     psql ${PSQLFLAGS} -c "INSERT INTO gtfs_feed_info (feed_file) VALUES ('$1');"
 fi
