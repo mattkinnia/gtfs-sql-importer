@@ -172,7 +172,8 @@ CREATE TABLE gtfs_routes (
   route_url text,
   route_color text,
   route_text_color text,
-  route_sort_order integer,
+  -- unofficial
+  route_sort_order integer default null,
   CONSTRAINT gtfs_routes_pkey PRIMARY KEY (feed_index, route_id),
   -- CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
   --   REFERENCES gtfs_agency (feed_index, agency_id),
@@ -205,7 +206,7 @@ CREATE TABLE gtfs_fare_attributes (
   transfers int,
   transfer_duration int,
   -- unofficial features
-  agency_id text,
+  agency_id text default null,
   CONSTRAINT gtfs_fare_attributes_pkey PRIMARY KEY (feed_index, fare_id),
   -- CONSTRAINT gtfs_fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
   -- REFERENCES gtfs_agency (feed_index, agency_id),
@@ -221,7 +222,7 @@ CREATE TABLE gtfs_fare_rules (
   destination_id text,
   contains_id text,
   -- unofficial features
-  service_id text,
+  service_id text default null,
   -- CONSTRAINT gtfs_fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
   -- REFERENCES gtfs_calendar (feed_index, service_id),
   -- CONSTRAINT gtfs_fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
@@ -239,7 +240,7 @@ CREATE TABLE gtfs_shapes (
   shape_pt_lon double precision NOT NULL,
   shape_pt_sequence int NOT NULL,
   -- optional
-  shape_dist_traveled double precision
+  shape_dist_traveled double precision default null
 );
 
 CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
@@ -266,7 +267,7 @@ CREATE TABLE gtfs_trips (
   wheelchair_accessible int REFERENCES gtfs_wheelchair_accessible(wheelchair_accessible),
 
   -- unofficial features
-  trip_type text,
+  trip_type text default null,
   CONSTRAINT gtfs_trips_pkey PRIMARY KEY (feed_index, trip_id),
   -- CONSTRAINT gtfs_trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
   -- REFERENCES gtfs_routes (feed_index, route_id),
@@ -295,8 +296,8 @@ CREATE TABLE gtfs_stop_times (
 
   -- unofficial features
   -- the following are not in the spec
-  arrival_time_seconds int,
-  departure_time_seconds int,
+  arrival_time_seconds int default null,
+  departure_time_seconds int default null,
   CONSTRAINT gtfs_stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence),
   -- CONSTRAINT gtfs_stop_times_trips_fkey FOREIGN KEY (feed_index, trip_id)
   -- REFERENCES gtfs_trips (feed_index, trip_id),
@@ -342,9 +343,9 @@ CREATE TABLE gtfs_transfers (
   transfer_type int REFERENCES gtfs_transfer_types(transfer_type),
   min_transfer_time int,
   -- Unofficial fields
-  from_route_id text,
-  to_route_id text,
-  service_id text,
+  from_route_id text default null,
+  to_route_id text default null,
+  service_id text default null,
   -- CONSTRAINT gtfs_transfers_from_stop_fkey FOREIGN KEY (feed_index, from_stop_id)
   --  REFERENCES gtfs_stops (feed_index, stop_id),
   --CONSTRAINT gtfs_transfers_to_stop_fkey FOREIGN KEY (feed_index, to_stop_id)
