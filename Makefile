@@ -19,7 +19,9 @@ files = agency \
 	fare_attributes \
 	fare_rules
 
-.PHONY: load vacuum init
+.PHONY: all load clean vacuum init
+
+all:
 
 drop_constraints:
 	$(PSQL) -f sql/drop_constraints.sql
