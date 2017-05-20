@@ -134,7 +134,7 @@ CREATE TABLE gtfs_stops (
   stop_region text,
   stop_postcode text,
   stop_country text,
-  stop_timezone text
+  stop_timezone text,
   location_type integer REFERENCES gtfs_location_types (location_type),
   direction text,
   position text,
@@ -401,8 +401,7 @@ insert into gtfs_payment_methods (payment_method, description) values
   (1,'Prepay');
 
 insert into gtfs_timepoints (timepoint, description) values
-  (null, 'Times are considered exact'),
-  (0, 'Times are considered approximate')
+  (0, 'Times are considered approximate'),
   (1, 'Times are considered exact');
 
 COMMIT;
