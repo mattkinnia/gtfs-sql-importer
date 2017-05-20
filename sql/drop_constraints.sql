@@ -57,7 +57,6 @@ ALTER TABLE gtfs_service_combinations
 
 -- gtfs_transfers
 
-/*
 ALTER TABLE gtfs_transfers
     DROP CONSTRAINT gtfs_transfers_from_stop_fkey CASCADE;
 ALTER TABLE gtfs_transfers
@@ -68,4 +67,3 @@ ALTER TABLE gtfs_transfers
     DROP CONSTRAINT gtfs_transfers_to_route_fkey CASCADE;
 ALTER TABLE gtfs_transfers
     DROP CONSTRAINT gtfs_transfers_service_fkey CASCADE;
-*/

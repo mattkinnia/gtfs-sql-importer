@@ -44,9 +44,11 @@ CREATE TABLE gtfs_agency (
   agency_name text,
   agency_url text,
   agency_timezone text,
+  -- optional
   agency_lang text,
   agency_phone text,
   agency_fare_url text,
+  agency_email text,
   CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
 );
 
@@ -83,8 +85,14 @@ CREATE TABLE gtfs_location_types (
   description text
 );
 
+-- related to gtfs_stop_times(timepoint)
+CREATE TABLE gtfs_timepoints (
+  timepoint int PRIMARY KEY,
+  description text
+);
+
 CREATE TABLE gtfs_calendar (
-  feed_index integer,
+  feed_index integer not null,
   service_id text,
   monday int NOT NULL,
   tuesday int NOT NULL,
@@ -113,7 +121,7 @@ CREATE TABLE gtfs_service_combinations (
 
 CREATE TABLE gtfs_stops (
   feed_index int NOT NULL,
-  stop_id integer,
+  stop_id text,
   stop_name text NOT NULL,
   stop_desc text,
   stop_lat double precision,
@@ -121,17 +129,18 @@ CREATE TABLE gtfs_stops (
   zone_id text,
   stop_url text,
   stop_code text,
-
-  -- new
   stop_street text,
   stop_city text,
   stop_region text,
   stop_postcode text,
   stop_country text,
-  location_type text,
+  stop_timezone text
+  location_type integer REFERENCES gtfs_location_types (location_type),
   direction text,
   position text,
   parent_station text,
+  wheelchair_boarding integer REFERENCES gtfs_wheelchair_boardings (wheelchair_boarding),
+  wheelchair_accessible integer REFERENCES gtfs_wheelchair_accessible (wheelchair_accessible),
   CONSTRAINT gtfs_stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
 SELECT AddGeometryColumn('gtfs_stops', 'the_geom', 4326, 'POINT', 2);
@@ -163,6 +172,7 @@ CREATE TABLE gtfs_routes (
   route_url text,
   route_color text,
   route_text_color text,
+  route_sort_order integer,
   CONSTRAINT gtfs_routes_pkey PRIMARY KEY (feed_index, route_id),
   -- CONSTRAINT gtfs_routes_fkey FOREIGN KEY (feed_index, agency_id)
   --   REFERENCES gtfs_agency (feed_index, agency_id),
@@ -227,7 +237,9 @@ CREATE TABLE gtfs_shapes (
   shape_id text NOT NULL,
   shape_pt_lat double precision NOT NULL,
   shape_pt_lon double precision NOT NULL,
-  shape_pt_sequence int NOT NULL
+  shape_pt_sequence int NOT NULL,
+  -- optional
+  shape_dist_traveled double precision
 );
 
 CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
@@ -270,19 +282,19 @@ CREATE INDEX gtfs_trips_service_id ON gtfs_trips (feed_index, service_id);
 CREATE TABLE gtfs_stop_times (
   feed_index int NOT NULL,
   trip_id text,
-  arrival_time text CHECK (arrival_time LIKE '__:__:__'),
-  departure_time text CHECK (departure_time LIKE '__:__:__'),
-  stop_id integer,
+  -- Check that casting to time interval works.
+  arrival_time interval CHECK (arrival_time::interval = arrival_time::interval),
+  departure_time interval CHECK (departure_time::interval = departure_time::interval),
+  stop_id text,
   stop_sequence int NOT NULL,
   stop_headsign text,
   pickup_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
   drop_off_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
   shape_dist_traveled double precision,
+  timepoint int REFERENCES gtfs_timepoints (timepoint),
+
   -- unofficial features
-
-  timepoint int,
   -- the following are not in the spec
-
   arrival_time_seconds int,
   departure_time_seconds int,
   CONSTRAINT gtfs_stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence),
@@ -298,9 +310,9 @@ CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
 CREATE TABLE gtfs_stop_distances_along_shape (
-  feed_index integer,
+  feed_index integer NOT NULL,
   shape_id text,
-  stop_id integer,
+  stop_id text,
   pct_along_shape numeric,
   dist_along_shape numeric
 );
@@ -325,8 +337,8 @@ CREATE TABLE gtfs_frequencies (
 
 CREATE TABLE gtfs_transfers (
   feed_index int NOT NULL,
-  from_stop_id integer,
-  to_stop_id integer,
+  from_stop_id text,
+  to_stop_id text,
   transfer_type int REFERENCES gtfs_transfer_types(transfer_type),
   min_transfer_time int,
   -- Unofficial fields
@@ -387,5 +399,10 @@ insert into gtfs_pickup_dropoff_types (type_id, description) values
 insert into gtfs_payment_methods (payment_method, description) values
   (0,'On Board'),
   (1,'Prepay');
+
+insert into gtfs_timepoints (timepoint, description) values
+  (null, 'Times are considered exact'),
+  (0, 'Times are considered approximate')
+  (1, 'Times are considered exact');
 
 COMMIT;
