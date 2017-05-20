@@ -39,7 +39,7 @@ CREATE TABLE gtfs_feed_info (
 );
 
 CREATE TABLE gtfs_agency (
-  feed_index integer,
+  feed_index integer REFERENCES gtfs_feed_info (feed_index),
   agency_id text,
   agency_name text,
   agency_url text,
@@ -47,8 +47,7 @@ CREATE TABLE gtfs_agency (
   agency_lang text,
   agency_phone text,
   agency_fare_url text,
-  CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id),
-  CONSTRAINT gtfs_agency_feed_fkey FOREIGN KEY REFERENCES gtfs_feed_info (feed_index)
+  CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
 );
 
 --related to gtfs_stops(wheelchair_accessible)
@@ -175,9 +174,9 @@ CREATE TABLE gtfs_calendar_dates (
   feed_index int NOT NULL,
   service_id text,
   date date NOT NULL,
-  exception_type int NOT NULL,
+  exception_type int NOT NULL --,
   -- CONSTRAINT gtfs_calendar_fkey FOREIGN KEY (feed_index, service_id)
-    REFERENCES gtfs_calendar (feed_index, service_id)
+    -- REFERENCES gtfs_calendar (feed_index, service_id)
 );
 
 CREATE INDEX gtfs_calendar_dates_dateidx ON gtfs_calendar_dates (date);
@@ -248,7 +247,7 @@ CREATE TABLE gtfs_trips (
   service_id text,
   trip_id text,
   trip_headsign text,
-  direction_id int REFERENCES gtfs_directions(direction_id),
+  direction_id int,
   block_id text,
   shape_id text,
   trip_short_name text,
