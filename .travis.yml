@@ -6,30 +6,27 @@ git:
 
 # define several feeds here
 env:
-  global:
-    - ENDPOINT=http://transitfeeds.com
-    - PDX=trimet/43
-    - CLE=greater-cleveland-regional-transit-authority/214
-    - ABQ=abq-ride/52
-    - MIA=miami-dade-county-transit/48
-    - BDL=connecticut-transit/323/gtfs.zip
+  - FEED=greater-cleveland-regional-transit-authority/214
+  - FEED=abq-ride/52
+  - FEED=connecticut-transit/323/gtfs.zip
+  - FEED=actv/631
+  - FEED=transperth/2
+  - FEED=greenbus-thailand/784
+  - FEED=subterraneos-de-buenos-aires/541
 
-# download latest GTFS files for cities
+before_install:
+  - psql --version
+  - make --version
+  - psql -U postgres -c "CREATE EXTENSION postgis; SELECT PostGIS_full_version();"
+
+# download latest GTFS data
 install:
-  - for feed in $PDX $CLE $ABQ $MIA $BDL; do
-    curl --create-dirs -L -o ${feed}/gtfs.zip ${ENDPOINT}/p/${feed}/latest/download;
-    done
+  - curl --create-dirs -L -o gtfs.zip http://transitfeeds.com/p/${FEED}/latest/download
 
 script:
-  - make init drop_constraints load GTFS=${PDX}/gtfs.zip DATABASE=pdx PSQLFLAGS=--quiet
-  - make init drop_constraints load GTFS=${CLE}/gtfs.zip DATABASE=cle PSQLFLAGS=--quiet
-  - make init drop_constraints load GTFS=${ABQ}/gtfs.zip DATABASE=abq PSQLFLAGS=--quiet
-  - make init drop_constraints load GTFS=${MIA}/gtfs.zip DATABASE=mia PSQLFLAGS=--quiet
-  - make init drop_constraints load GTFS=${BDL}/gtfs.zip DATABASE=bdl PSQLFLAGS=--quiet
+  - make init PSQLFLAGS="-U postgres -q"
+  - make drop_constraints PSQLFLAGS="-U postgres -q"
+  - make load GTFS=gtfs.zip PSQLFLAGS="-U postgres -q"
 
 after_script:
-  - make add_constraints DATABASE=pdx
-  - make add_constraints DATABASE=cle
-  - make add_constraints DATABASE=abq
-  - make add_constraints DATABASE=mia
-  - make add_constraints DATABASE=bdl
+  - make add_constraints PSQLFLAGS="-U postgres -q"
