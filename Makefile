@@ -16,7 +16,7 @@ add_constraints:
 	$(PSQL) -f sql/constraints.sql
 
 load: $(GTFS)
-	sh load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
+	$(SHELL) load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
 	$(PSQL) -f sql/shape_geoms.sql
 
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
