@@ -391,16 +391,6 @@ insert into gtfs_wheelchair_accessible(wheelchair_accessible, description) value
   (1, 'The vehicle being used on this particular trip can accommodate at least one rider in a wheelchair'),
   (2, 'No riders in wheelchairs can be accommodated on this trip');
 
-insert into gtfs_route_types (route_type, description) values
-  (0, 'Street Level Rail'),
-  (1, 'Underground Rail'),
-  (2, 'Intercity Rail'),
-  (3, 'Bus'),
-  (4, 'Ferry'),
-  (5, 'Cable Car'),
-  (6, 'Suspended Car'),
-  (7, 'Steep Incline Mode');
-
 insert into gtfs_pickup_dropoff_types (type_id, description) values
   (0,'Regularly Scheduled'),
   (1,'Not available'),

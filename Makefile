@@ -24,4 +24,5 @@ vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
 init: sql/schema.sql
 	-createdb $(DATABASE) && $(PSQL) -c "CREATE EXTENSION postgis"
 	$(PSQL) -f $<
+	$(PSQL) -c "\copy gtfs_route_types FROM 'data/route_types.txt'"
 	$(PSQL) -f sql/constraints.sql
