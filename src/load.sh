@@ -26,6 +26,7 @@ if [[ "${FILES/feed_info}" != "$FILES" ]]; then
     # Contains feed info, so load that into the table
     echo "Loading feed_info from dataset"
     import_stdin "feed_info"
+    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_file = '$1' WHERE feed_index = (SELECT max(feed_index) FROM gtfs_feed_info)"
 else
     ADD_DATES=true
     # get the min and max calendar dates for this
