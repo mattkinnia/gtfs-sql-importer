@@ -49,15 +49,14 @@ def set_defaults(cursor):
     query = ';'.join(alter.format(t) for t in TABLES)
     cursor.execute(query, {'index': index})
 
-
 def reset_defaults(cursor):
     query = ';'.join(reset.format(t) for t in TABLES)
     cursor.execute(query)
 
-
 def copy_from(f, cursor, name):
-    cols = f.readline().split(',')
-    cursor.copy_from(f, 'gtfs_' + name, sep=',', columns=cols)
+    cols = ','.join(x.strip('"\'\r\n ') for x in f.readline().split(','))
+    copy = "COPY {0} ({1}) FROM STDIN WITH CSV DELIMITER ',' QUOTE '\"' NULL AS ''"
+    cursor.copy_expert(copy.format('gtfs_' + name, cols), f)
 
 
 def main(archive, connstring):
@@ -84,7 +83,7 @@ def main(archive, connstring):
                         pass
 
                 reset_defaults(cursor)
-                cursor.commit()
+            conn.commit()
 
 if __name__ == "__main__":
     if len(sys.argv) not in (3, 4):
