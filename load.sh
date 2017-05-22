@@ -41,7 +41,7 @@ echo "SET feed_index = $feed_index" 1>&2
 
 # for each table, check if file exists
 for table in $TABLES; do
-    if [[ ${FILES/$table} != "$FILES" ]]; then
+    if [[ ${FILES/${table}.txt} != "$FILES" ]]; then
         # set default feed_index
         psql ${PSQLFLAGS} -c "ALTER TABLE gtfs_${table} ALTER COLUMN feed_index SET DEFAULT ${feed_index}"
 
