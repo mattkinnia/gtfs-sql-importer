@@ -26,7 +26,7 @@ SELECT
   stop_id,
   ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape,
   ROUND(CAST(
-    ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_LengthSpheroid(route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]')
+    ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_Length_Spheroid(route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]')
     as NUMERIC), 1)
 FROM
   (
