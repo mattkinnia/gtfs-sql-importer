@@ -1,0 +1,35 @@
+services:
+  - postgresql
+
+git:
+  depth: 3
+
+# define several feeds here
+env:
+  global:
+    - ENDPOINT=http://transitfeeds.com
+    - PDX=trimet/43
+    - CLE=greater-cleveland-regional-transit-authority/214
+    - ABQ=abq-ride/52
+    - MIA=miami-dade-county-transit/48
+    - BDL=connecticut-transit/323/gtfs.zip
+
+# download latest GTFS files for cities
+install:
+  - for feed in $PDX $CLE $ABQ $MIA $BDL; do
+    curl --create-dirs -L -o ${feed}/gtfs.zip ${ENDPOINT}/p/${feed}/latest/download;
+    done
+
+script:
+  - make init drop_constraints load GTFS=${PDX}/gtfs.zip DATABASE=pdx PSQLFLAGS=--quiet
+  - make init drop_constraints load GTFS=${CLE}/gtfs.zip DATABASE=cle PSQLFLAGS=--quiet
+  - make init drop_constraints load GTFS=${ABQ}/gtfs.zip DATABASE=abq PSQLFLAGS=--quiet
+  - make init drop_constraints load GTFS=${MIA}/gtfs.zip DATABASE=mia PSQLFLAGS=--quiet
+  - make init drop_constraints load GTFS=${BDL}/gtfs.zip DATABASE=bdl PSQLFLAGS=--quiet
+
+after_script:
+  - make add_constraints DATABASE=pdx
+  - make add_constraints DATABASE=cle
+  - make add_constraints DATABASE=abq
+  - make add_constraints DATABASE=mia
+  - make add_constraints DATABASE=bdl
