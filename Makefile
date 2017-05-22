@@ -1,11 +1,18 @@
 SHELL = bash
-# add TRANSITFEEDS api integration
+
+TABLES = agency calendar \
+	calendar_dates routes \
+	shapes stop_times \
+	stops trips \
+	transfers frequencies \
+	fare_attributes fare_rules
 
 DATABASE = 
 PSQLFLAGS =
 PSQL = psql $(DATABASE) $(PSQLFLAGS)
 
-.PHONY: all load vacuum init drop_constraints add_constraints drop_indices add_indices
+.PHONY: all load vacuum init clean \
+	drop_constraints add_constraints drop_indices add_indices
 
 all:
 
@@ -21,8 +28,14 @@ load: $(GTFS)
 
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
 
+clean:
+	[[ $(words $(FEED_INDEX)) -eq 1 ]] && for t in $(TABLES); \
+	do $(PSQL) -c "DELETE FROM gtfs_$${t} WHERE feed_index = $(FEED_INDEX)";\
+	done;
+
 init: sql/schema.sql
-	-createdb $(DATABASE) && $(PSQL) -c "CREATE EXTENSION postgis"
+	-createdb $(DATABASE)
+	-$(PSQL) -c "CREATE EXTENSION postgis"
 	$(PSQL) -f $<
 	$(PSQL) -c "\copy gtfs_route_types FROM 'data/route_types.txt'"
 	$(PSQL) -f sql/constraints.sql
