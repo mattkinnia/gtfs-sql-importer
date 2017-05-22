@@ -2,13 +2,13 @@
 
 TABLES="agency calendar calendar_dates routes shapes stop_times stops trips transfers frequencies fare_attributes fare_rules"
 
-# takes two arguments
-# A zip file containing gtfs files:
+# This script takes two arguments: 
+# A zip file containing gtfs files, and a set of psql flags
 ZIP=$1
-# Second, set of psql flags
 PSQLFLAGS=${*/$1/ }
 
 FILES=$(unzip -l "${ZIP}" | awk '{print $NF}' | grep .txt)
+set -e
 
 # Called with name of table
 function import_stdin()
