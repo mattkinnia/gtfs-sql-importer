@@ -5,18 +5,18 @@ DATABASE =
 PSQLFLAGS =
 PSQL = psql $(DATABASE) $(PSQLFLAGS)
 
-.PHONY: all load vacuum init drop_constraints add_constraints
+.PHONY: all load vacuum init drop_constraints add_constraints drop_indices add_indices
 
 all:
 
-drop_constraints:
-	$(PSQL) -f sql/drop_constraints.sql
+add_constraints add_indices: add_%: sql/%.sql
+	$(PSQL) -f $<
 
-add_constraints:
-	$(PSQL) -f sql/constraints.sql
+drop_constraints drop_indices: drop_%: sql/drop_%.sql
+	$(PSQL) -f $<
 
 load: $(GTFS)
-	$(SHELL) load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
+	$(SHELL) src/load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
 	$(PSQL) -f sql/shape_geoms.sql
 
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
