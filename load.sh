@@ -14,7 +14,8 @@ set -e
 function import_stdin()
 {
     local hed
-    hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1)
+    # remove possible BOM
+    hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1 | awk '{sub(/^\xef\xbb\xbf/,"")}{print}')
     echo "COPY gtfs_${1}" 1>&2
     # Remove empty double quotes
     unzip -p "$ZIP" "${1}.txt" | sed 's/""//g' | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
