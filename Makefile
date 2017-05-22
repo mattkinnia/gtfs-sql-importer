@@ -5,21 +5,7 @@ DATABASE =
 PSQLFLAGS =
 PSQL = psql $(DATABASE) $(PSQLFLAGS)
 
-files = agency \
-	calendar \
-	calendar_dates \
-	routes \
-	shapes \
-	stop_times \
-	stops \
-	trips \
-	transfers \
-	frequencies \
-	feed_info \
-	fare_attributes \
-	fare_rules
-
-.PHONY: all load clean vacuum init
+.PHONY: all load vacuum init drop_constraints add_constraints
 
 all:
 
