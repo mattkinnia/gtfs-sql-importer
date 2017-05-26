@@ -24,10 +24,8 @@ SELECT
   feed_index,
   shape_id,
   stop_id,
-  ROUND(CAST(ST_LineLocatePoint(route.the_geom, stop.the_geom) as numeric), 3) AS pct_along_shape,
-  ROUND(CAST(
-    ST_LineLocatePoint(route.the_geom, stop.the_geom) * ST_Length_Spheroid(route.the_geom, 'SPHEROID["WGS 84",6378137,298.257223563]')
-    as NUMERIC), 1)
+  ROUND(ST_LineLocatePoint(route.the_geom, stop.the_geom)::numeric, 3) AS pct_along_shape,
+  ROUND(ST_LineLocatePoint(route.the_geom, stop.the_geom)::numeric * ST_Length(route.the_geom::geography)::numeric, 1)
 FROM
   (
     SELECT DISTINCT
