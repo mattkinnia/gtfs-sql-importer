@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS gtfs_stop_times cascade;
 DROP TABLE IF EXISTS gtfs_frequencies cascade;
 DROP TABLE IF EXISTS gtfs_shape_geoms CASCADE;
 DROP TABLE IF EXISTS gtfs_transfers cascade;
+DROP TABLE IF EXISTS gtfs_timepoints cascade;
 DROP TABLE IF EXISTS gtfs_feed_info cascade;
 DROP TABLE IF EXISTS gtfs_route_types cascade;
 DROP TABLE IF EXISTS gtfs_pickup_dropoff_types cascade;
@@ -19,8 +20,8 @@ DROP TABLE IF EXISTS gtfs_location_types cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_boardings cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_accessible cascade;
 DROP TABLE IF EXISTS gtfs_transfer_types cascade;
-DROP TABLE IF EXISTS service_combinations CASCADE;
-DROP TABLE IF EXISTS service_combo_ids CASCADE;
+DROP TABLE IF EXISTS gtfs_service_combinations CASCADE;
+DROP TABLE IF EXISTS gtfs_service_combo_ids CASCADE;
 DROP TABLE IF EXISTS gtfs_stop_distances_along_shape;
 
 BEGIN;
