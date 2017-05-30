@@ -56,6 +56,12 @@ CREATE TABLE gtfs_agency (
   CONSTRAINT gtfs_agency_pkey PRIMARY KEY (feed_index, agency_id)
 );
 
+--related to gtfs_calendar_dates(exception_type)
+CREATE TABLE gtfs_exception_types (
+  exception_type int PRIMARY KEY,
+  description text
+);
+
 --related to gtfs_stops(wheelchair_accessible)
 CREATE TABLE gtfs_wheelchair_accessible (
   wheelchair_accessible int PRIMARY KEY,
@@ -192,7 +198,7 @@ CREATE TABLE gtfs_calendar_dates (
   feed_index int not null,
   service_id text,
   date date not null,
-  exception_type int not null --,
+  exception_type int REFERENCES gtfs_exception_types(exception_type) --,
   -- CONSTRAINT gtfs_calendar_fkey FOREIGN KEY (feed_index, service_id)
     -- REFERENCES gtfs_calendar (feed_index, service_id)
 );
@@ -326,7 +332,8 @@ CREATE TABLE gtfs_stop_distances_along_shape (
   shape_id text,
   stop_id text,
   pct_along_shape numeric,
-  dist_along_shape numeric
+  dist_along_shape numeric,
+  CONSTRAINT gtfs_stop_distances_unique UNIQUE (feed_index, shape_id, stop_id)
 );
 CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
   (feed_index, shape_id);
@@ -370,6 +377,10 @@ CREATE TABLE gtfs_transfers (
   CONSTRAINT gtfs_transfers_feed_fkey FOREIGN KEY (feed_index)
     REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
+
+insert into gtfs_exception_types (exception_type, description) values 
+  (1, 'service has been added'),
+  (2, 'service has been removed');
 
 insert into gtfs_transfer_types (transfer_type, description) VALUES
   (0,'Preferred transfer point'),
