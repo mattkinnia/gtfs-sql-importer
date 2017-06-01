@@ -20,8 +20,6 @@ DROP TABLE IF EXISTS gtfs_location_types cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_boardings cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_accessible cascade;
 DROP TABLE IF EXISTS gtfs_transfer_types cascade;
-DROP TABLE IF EXISTS gtfs_service_combinations CASCADE;
-DROP TABLE IF EXISTS gtfs_service_combo_ids CASCADE;
 
 BEGIN;
 
@@ -78,11 +76,6 @@ CREATE TABLE gtfs_pickup_dropoff_types (
   description text
 );
 
--- The following two tables are not in the spec, but they make dealing with dates and services easier
-CREATE TABLE service_combo_ids (
-  combination_id serial PRIMARY KEY
-);
-
 CREATE TABLE gtfs_transfer_types (
   transfer_type int PRIMARY KEY,
   description text
@@ -117,16 +110,6 @@ CREATE TABLE gtfs_calendar (
     REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
 );
 CREATE INDEX gtfs_calendar_service_id ON gtfs_calendar (service_id);
-
-CREATE TABLE gtfs_service_combinations (
-  feed_index int not null,
-  combination_id int REFERENCES service_combo_ids (combination_id),
-  service_id text,
-  -- CONSTRAINT service_combinations_service_fkey FOREIGN KEY (feed_index, service_id)
-  --  REFERENCES gtfs_calendar (feed_index, service_id)
-  CONSTRAINT gtfs_service_combo_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES gtfs_feed_info (feed_index) ON DELETE CASCADE
-);
 
 CREATE TABLE gtfs_stops (
   feed_index int not null,

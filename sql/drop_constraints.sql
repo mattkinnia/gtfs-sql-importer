@@ -38,11 +38,6 @@ ALTER TABLE gtfs_stop_times
 ALTER TABLE gtfs_frequencies
     DROP CONSTRAINT gtfs_frequencies_trip_fkey CASCADE;
 
--- gtfs_service_combinations
-
-ALTER TABLE gtfs_service_combinations
-  DROP CONSTRAINT service_combinations_service_fkey;
-
 -- gtfs_transfers
 
 ALTER TABLE gtfs_transfers
@@ -51,7 +46,3 @@ ALTER TABLE gtfs_transfers
     DROP CONSTRAINT gtfs_transfers_from_route_fkey CASCADE,
     DROP CONSTRAINT gtfs_transfers_to_route_fkey CASCADE,
     DROP CONSTRAINT gtfs_transfers_service_fkey CASCADE;
-
--- gtfs_stop_distances_along_shape
-ALTER TABLE gtfs_stop_distances_along_shape
-    DROP CONSTRAINT gtfs_stop_distances_unique;

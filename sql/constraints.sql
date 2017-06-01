@@ -70,13 +70,6 @@ ALTER TABLE gtfs_frequencies
   FOREIGN KEY (feed_index, trip_id)
   REFERENCES gtfs_trips (feed_index, trip_id);
 
--- gtfs_service_combinations
-
-ALTER TABLE gtfs_service_combinations
-  ADD CONSTRAINT service_combinations_service_fkey
-  FOREIGN KEY (feed_index, service_id)
-  REFERENCES gtfs_calendar (feed_index, service_id);
-
 -- gtfs_transfers
 
 ALTER TABLE gtfs_transfers
@@ -103,9 +96,3 @@ ALTER TABLE gtfs_transfers
   ADD CONSTRAINT gtfs_transfers_service_fkey
   FOREIGN KEY (feed_index, service_id)
   REFERENCES gtfs_calendar (feed_index, service_id);
-
--- gtfs_stop_distances_along_shape
-
-ALTER TABLE gtfs_stop_distances_along_shape
-  ADD CONSTRAINT gtfs_stop_distances_unique
-  UNIQUE (feed_index, shape_id, stop_id);
