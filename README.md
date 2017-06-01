@@ -21,6 +21,11 @@ To import the GTFS dataset in file named `gtfs.zip` into a Postgres database nam
 make load GTFS=gtfs.zip DATABASE=mydbname
 ````
 
+For large feeds, you may find that loading is faster with indices. Don't forget to add them back, or all your queries will be very slow:
+````
+make drop_indices load add_indices GTFS=gtfs.zip DATABASE=mydbname
+````
+
 ## Feed indexes
 
 GTFS data is regularly updated, and it's reasonable to want to include multiple iterations in the same database. This tool includes a `feed_index` column in each table. This index is part of the primary key of each table.
