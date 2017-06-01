@@ -16,15 +16,15 @@ PSQL = psql $(DATABASE) $(PSQLFLAGS)
 
 all:
 
-add_constraints add_indices: add_%: sql/%.sql
+add_constraints add_indices add_triggers: add_%: sql/%.sql
 	$(PSQL) -f $<
 
-drop_constraints drop_indices: drop_%: sql/drop_%.sql
+drop_constraints drop_indices drop_triggers: drop_%: sql/drop_%.sql
 	$(PSQL) -f $<
 
 load: $(GTFS)
 	$(SHELL) src/load.sh $(GTFS) $(DATABASE) $(PSQLFLAGS)
-	$(PSQL) -f sql/shape_geoms.sql
+	@$(PSQL) -tAc "SELECT 'loaded feed with index: ' || MAX(feed_index)::text FROM gtfs_feed_info"
 
 vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
 

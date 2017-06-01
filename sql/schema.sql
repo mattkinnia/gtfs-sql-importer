@@ -22,7 +22,6 @@ DROP TABLE IF EXISTS gtfs_wheelchair_accessible cascade;
 DROP TABLE IF EXISTS gtfs_transfer_types cascade;
 DROP TABLE IF EXISTS gtfs_service_combinations CASCADE;
 DROP TABLE IF EXISTS gtfs_service_combo_ids CASCADE;
-DROP TABLE IF EXISTS gtfs_stop_distances_along_shape;
 
 BEGIN;
 
@@ -258,10 +257,36 @@ CREATE TABLE gtfs_shapes (
 
 CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
 
+CREATE OR REPLACE FUNCTION gtfs_shape_update()
+  RETURNS TRIGGER AS $shape_update$
+  BEGIN
+    INSERT INTO gtfs_shape_geoms SELECT
+      feed_index,
+      shape_id,
+      ST_Length(ST_MakeLine(array_agg(geom ORDER BY shape_pt_sequence))::geography) as length,
+      ST_SetSRID(ST_MakeLine(array_agg(geom ORDER BY shape_pt_sequence)), 4326) AS the_geom
+    FROM (
+      SELECT
+        feed_index,
+        shape_id,
+        shape_pt_sequence,
+        ST_MakePoint(shape_pt_lon, shape_pt_lat) AS geom
+      FROM gtfs_shapes s
+        LEFT JOIN gtfs_shape_geoms sg USING (feed_index, shape_id)
+      WHERE the_geom IS NULL
+    ) a GROUP BY feed_index, shape_id;
+  RETURN NULL;
+  END;
+$shape_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER gtfs_shape_geom_trigger AFTER INSERT ON gtfs_shapes
+  FOR EACH STATEMENT EXECUTE PROCEDURE gtfs_shape_update();
+
 -- Create new table to store the shape geometries
 CREATE TABLE gtfs_shape_geoms (
   feed_index int not null,
   shape_id text not null,
+  length numeric not null,
   CONSTRAINT gtfs_shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
 -- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
@@ -306,7 +331,7 @@ CREATE TABLE gtfs_stop_times (
   stop_headsign text,
   pickup_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
   drop_off_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
-  shape_dist_traveled double precision,
+  shape_dist_traveled numeric,
   timepoint int REFERENCES gtfs_timepoints (timepoint),
 
   -- unofficial features
@@ -327,16 +352,51 @@ CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
 CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
-CREATE TABLE gtfs_stop_distances_along_shape (
-  feed_index integer not null,
-  shape_id text,
-  stop_id text,
-  pct_along_shape numeric,
-  dist_along_shape numeric,
-  CONSTRAINT gtfs_stop_distances_unique UNIQUE (feed_index, shape_id, stop_id)
-);
-CREATE INDEX gtfs_stop_dist_along_shape_index ON gtfs_stop_distances_along_shape
-  (feed_index, shape_id);
+CREATE OR REPLACE FUNCTION careful_locate
+  (line geometry, point geometry, frac numeric, fuzz numeric default 0.375)
+  RETURNS numeric AS $$
+    SELECT ST_LineLocatePoint(
+      ST_LineSubstring($1, GREATEST(0, $3 - $4), LEAST(1, $3 + $4)), $2
+    )::numeric
+  $$ LANGUAGE SQL IMMUTABLE;
+
+-- Fill in the shape_dist_traveled field using stop and shape geometries. 
+CREATE OR REPLACE FUNCTION gtfs_dist_update()
+  RETURNS TRIGGER AS $dist_update$
+  BEGIN
+  WITH max AS (
+    -- fast because of index
+    SELECT feed_index, trip_id, max(stop_sequence) AS seq
+    FROM gtfs_stop_times
+    GROUP BY feed_index, trip_id
+  ), a AS (
+    SELECT
+      feed_index,
+      trip_id,
+      stop_id,
+      stop_sequence,
+      ROUND(careful_locate(route.the_geom, stop.the_geom, stop_sequence::numeric / max.seq) * route.length, 2) AS dist
+    FROM gtfs_stop_times
+      LEFT JOIN gtfs_trips USING (feed_index, trip_id)
+      LEFT JOIN max USING (feed_index, trip_id)
+      LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
+      LEFT JOIN gtfs_stops as stop USING (feed_index, stop_id)
+    WHERE shape_dist_traveled IS NULL
+  )
+  UPDATE gtfs_stop_times SET shape_dist_traveled = a.dist
+  FROM a
+  WHERE gtfs_stop_times.feed_index = a.feed_index
+    AND gtfs_stop_times.trip_id = a.trip_id
+    AND gtfs_stop_times.stop_sequence = a.stop_sequence
+    AND gtfs_stop_times.stop_id = a.stop_id
+    AND shape_dist_traveled IS NULL;
+  RETURN NULL;
+  END;
+  $dist_update$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER gtfs_stop_times_dist_trigger AFTER INSERT ON gtfs_stop_times
+  FOR EACH STATEMENT EXECUTE PROCEDURE gtfs_dist_update();
 
 CREATE TABLE gtfs_frequencies (
   feed_index int not null,

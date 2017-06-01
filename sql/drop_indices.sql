@@ -31,8 +31,6 @@ DROP INDEX gtfs_stop_times_key;
 DROP INDEX arr_time_index;
 DROP INDEX dep_time_index;
 
-DROP INDEX gtfs_stop_dist_along_shape_index;
-
 ALTER TABLE gtfs_shape_geoms
   DROP CONSTRAINT gtfs_shape_geom_pkey;
 

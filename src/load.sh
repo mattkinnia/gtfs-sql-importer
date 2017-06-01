@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TABLES="agency calendar calendar_dates routes shapes stop_times stops trips transfers frequencies fare_attributes fare_rules"
+TABLES="agency calendar calendar_dates routes shapes stops trips stop_times transfers frequencies fare_attributes fare_rules"
 
 # This script takes two arguments: 
 # A zip file containing gtfs files, and a set of psql flags
