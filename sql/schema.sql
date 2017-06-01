@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS gtfs_route_types cascade;
 DROP TABLE IF EXISTS gtfs_pickup_dropoff_types cascade;
 DROP TABLE IF EXISTS gtfs_payment_methods cascade;
 DROP TABLE IF EXISTS gtfs_location_types cascade;
+DROP TABLE IF EXISTS gtfs_exception_types cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_boardings cascade;
 DROP TABLE IF EXISTS gtfs_wheelchair_accessible cascade;
 DROP TABLE IF EXISTS gtfs_transfer_types cascade;
