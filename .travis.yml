@@ -27,6 +27,9 @@ script:
   - make init PSQLFLAGS="-U postgres -q"
   - make drop_constraints PSQLFLAGS="-U postgres -q"
   - make load GTFS=gtfs.zip PSQLFLAGS="-U postgres -q"
+  - make add_constraints PSQLFLAGS="-U postgres -q"
 
 after_script:
-  - make add_constraints PSQLFLAGS="-U postgres -q"
+  - psql -U postgres -c "SELECT * FROM gtfs_feed_info"
+  - psql -U postgres -c "SELECT * FROM gtfs_stop_times LIMIT 10"
+  - psql -U postgres -c "SELECT * FROM gtfs_shape_geoms LIMIT 10"
