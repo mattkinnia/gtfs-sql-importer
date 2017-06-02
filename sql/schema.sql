@@ -338,11 +338,20 @@ CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
 CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
+-- "route" may curve back on itself, so we use addtional information to 
+-- define a segment (substring) of the route, snap the point to that, and then
+-- run LineLocatePoint.
+-- In this case, the additonal information is the sequence number of the stop.
+-- In the default case, we look at a segment up to 50% of the length of the route.
 CREATE OR REPLACE FUNCTION careful_locate
-  (line geometry, point geometry, frac numeric, fuzz numeric default 0.375)
+  (route geometry, point geometry, frac numeric, fuzz numeric default 0.25)
   RETURNS numeric AS $$
     SELECT ST_LineLocatePoint(
-      ST_LineSubstring($1, GREATEST(0, $3 - $4), LEAST(1, $3 + $4)), $2
+      $1,
+      ST_ClosestPoint(
+        ST_LineSubstring($1, GREATEST(0, $3 - $4), LEAST(1, $3 + $4)),
+        $2
+      )
     )::numeric
   $$ LANGUAGE SQL IMMUTABLE;
 
