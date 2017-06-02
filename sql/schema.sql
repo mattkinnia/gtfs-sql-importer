@@ -244,7 +244,9 @@ CREATE INDEX gtfs_shapes_shape_key ON gtfs_shapes (shape_id);
 CREATE OR REPLACE FUNCTION gtfs_shape_update()
   RETURNS TRIGGER AS $shape_update$
   BEGIN
-    INSERT INTO gtfs_shape_geoms SELECT
+    INSERT INTO gtfs_shape_geoms
+      (feed_index, shape_id, length, the_geom)
+    SELECT
       feed_index,
       shape_id,
       ST_Length(ST_MakeLine(array_agg(geom ORDER BY shape_pt_sequence))::geography) as length,
