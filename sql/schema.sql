@@ -344,16 +344,12 @@ CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 -- In this case, the additonal information is the sequence number of the stop.
 -- In the default case, we look at a segment up to 50% of the length of the route.
 CREATE OR REPLACE FUNCTION careful_locate
-  (route geometry, point geometry, frac numeric, fuzz numeric default 0.25)
+  (route geometry, point geometry, frac numeric, fuzz numeric default 0.05)
   RETURNS numeric AS $$
-    SELECT ST_LineLocatePoint(
-      $1,
-      ST_ClosestPoint(
-        ST_LineSubstring($1, GREATEST(0, $3 - $4), LEAST(1, $3 + $4)),
-        $2
-      )
-    )::numeric
-  $$ LANGUAGE SQL IMMUTABLE;
+    SELECT ST_LineLocatePoint(route,
+      ST_ClosestPoint(ST_LineSubstring(route, GREATEST(0, frac - fuzz), LEAST(1, frac + fuzz)), point)
+    )::numeric;
+  $$ LANGUAGE SQL;
 
 -- Fill in the shape_dist_traveled field using stop and shape geometries. 
 CREATE OR REPLACE FUNCTION gtfs_dist_update()
