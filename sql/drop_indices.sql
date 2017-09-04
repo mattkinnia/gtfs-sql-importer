@@ -1,5 +1,3 @@
-BEGIN;
-
 ALTER TABLE gtfs_agency
   DROP CONSTRAINT gtfs_agency_pkey CASCADE;
 
@@ -36,5 +34,3 @@ ALTER TABLE gtfs_shape_geoms
 
 ALTER TABLE gtfs_frequencies
   DROP CONSTRAINT gtfs_frequencies_pkey CASCADE;
-
-COMMIT;

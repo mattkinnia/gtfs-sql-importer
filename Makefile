@@ -1,7 +1,7 @@
 SHELL = bash
 
-TABLES = agency calendar \
-	calendar_dates routes \
+TABLES = agency calendar_dates \
+	calendar routes \
 	shapes stop_times \
 	stops trips \
 	transfers frequencies \
@@ -12,14 +12,16 @@ PSQLFLAGS =
 PSQL = psql $(DATABASE) $(PSQLFLAGS)
 
 .PHONY: all load vacuum init clean \
-	drop_constraints add_constraints drop_indices add_indices
+	drop_constraints add_constraints \
+	drop_indices add_indices \
+	add_triggers drop_triggers
 
 all:
 
 add_constraints add_indices add_triggers: add_%: sql/%.sql
 	$(PSQL) -f $<
 
-drop_constraints drop_indices drop_triggers: drop_%: sql/drop_%.sql
+drop_indices drop_constraints drop_triggers: drop_%: sql/drop_%.sql
 	$(PSQL) -f $<
 
 load: $(GTFS)
