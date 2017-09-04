@@ -7,7 +7,7 @@ TABLES = agency calendar_dates \
 	transfers frequencies \
 	fare_attributes fare_rules
 
-DATABASE = 
+PG_DATABASE = 
 PSQLFLAGS =
 PSQL = psql $(DATABASE) $(PSQLFLAGS)
 

@@ -10,7 +10,7 @@ This importer uses a Makefile to organize a series of SQL commands. The file `sr
 
 Before importing data, set up database with:
 ```
-make init DATABASE=mydbname
+make init PG_DATABASE=mydbname
 ```
 This will create the necessary tables, as well as useful indices and foreign keys. (It will create a database named `mydbname` if one does not exist).
 
@@ -18,12 +18,12 @@ Next, download a ZIP file containing a GTFS feed. You do not need to decompress 
 
 To import the GTFS dataset in file named `gtfs.zip` into a Postgres database names `mydbname`:
 ````
-make load GTFS=gtfs.zip DATABASE=mydbname
+make load GTFS=gtfs.zip PG_DATABASE=mydbname
 ````
 
 For large feeds, you may find that loading is faster with indices. Don't forget to add them back, or all your queries will be very slow:
 ````
-make drop_indices load add_indices GTFS=gtfs.zip DATABASE=mydbname
+make drop_indices load add_indices GTFS=gtfs.zip PG_DATABASE=mydbname
 ````
 
 ## Feed indexes
@@ -41,7 +41,7 @@ ERROR:  column "example_column" of relation "gtfs_example" does not exist
 Some GTFS data providers add non-standard columns to their files. Consider adding the column to `sql/schema.sql` and submitting a pull request.
 Solution:
 ```
-psql DATABASE -c 'ALTER TABLE gtfs_example ADD COLUMN example_column text'
+psql PG_DATABASE -c 'ALTER TABLE gtfs_example ADD COLUMN example_column text'
 ```
 
 ### Null data
@@ -51,9 +51,9 @@ ERROR:  null value in column "example_id" violates not-null constraint
 This might occur if an "id" column (e.g. `route_id`) is improperly empty. One solution: edit the file to add a non-empty value.
 Another solution: drop indices from the database and reload the data:
 ```
-make drop_indices load DATABASE=mydb
+make drop_indices load PG_DATABASE=mydb
 ```
-Then edit the database to add a non-empty value and recreate the indices (`make add_indices DATABASE=mydb`).
+Then edit the database to add a non-empty value and recreate the indices (`make add_indices PG_DATABASE=mydb`).
 
 # License
 Released under the MIT (X11) license. See LICENSE in this directory.
