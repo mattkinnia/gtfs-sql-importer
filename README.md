@@ -16,9 +16,14 @@ This will create the necessary tables, as well as useful indices and foreign key
 
 Next, download a ZIP file containing a GTFS feed. You do not need to decompress it to import it.
 
-To import the GTFS dataset in file named `gtfs.zip` into a Postgres database names `mydbname`:
+To import the GTFS dataset in file named `gtfs.zip` into a local Postgres database named `mydbname`:
 ````
 make load GTFS=gtfs.zip PG_DATABASE=mydbname
+````
+
+Place connection parameters in the `PSQLFLAGS` variable:
+````
+make load GTFS=gtfs.zip PG_DATABASE=mydbname PSQLFLAGS="-h example.com -U user"
 ````
 
 For large feeds, you may find that loading is faster with indices. Don't forget to add them back, or all your queries will be very slow:
