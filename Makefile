@@ -5,7 +5,7 @@ TABLES = agency calendar_dates \
 	shapes stop_times \
 	stops trips \
 	transfers frequencies \
-	fare_attributes fare_rules
+	fare_attributes fare_rules feed_info
 
 PG_DATABASE = 
 PSQLFLAGS =
