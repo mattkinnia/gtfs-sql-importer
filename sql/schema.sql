@@ -317,7 +317,7 @@ CREATE TABLE gtfs_stop_times (
   stop_headsign text,
   pickup_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
   drop_off_type int REFERENCES gtfs_pickup_dropoff_types(type_id),
-  shape_dist_traveled numeric,
+  shape_dist_traveled numeric(10, 2),
   timepoint int REFERENCES gtfs_timepoints (timepoint),
 
   -- unofficial features
@@ -338,55 +338,80 @@ CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
 CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
--- "route" may curve back on itself, so we use addtional information to 
--- define a segment (substring) of the route, snap the point to that, and then
--- run LineLocatePoint.
--- In this case, the additonal information is the sequence number of the stop.
--- In the default case, we look at a segment up to 50% of the length of the route.
-CREATE OR REPLACE FUNCTION careful_locate
-  (route geometry, point geometry, frac numeric, fuzz numeric default 0.05)
+-- "Safely" locate a point on a (possibly complicated) line by using minimum and maximum distances.
+-- Unlike st_LineLocatePoint, this accepts and returns absolute distances, not fractions
+CREATE OR REPLACE FUNCTION safe_locate
+  (route geometry, point geometry, start numeric, finish numeric, length numeric)
   RETURNS numeric AS $$
-    SELECT ST_LineLocatePoint(route,
-      ST_ClosestPoint(ST_LineSubstring(route, GREATEST(0, frac - fuzz), LEAST(1, frac + fuzz)), point)
-    )::numeric;
+    -- Multiply the fractional distance also the substring by the substring,
+    -- then add the start distance
+    SELECT start + ST_LineLocatePoint(
+      ST_LineSubstring(route, GREATEST(0, start / length), LEAST(1, finish / length)),
+      point
+    )::numeric * (
+      -- The absolute distance between start and finish
+      LEAST(length, finish) - GREATEST(0, start)
+    );
   $$ LANGUAGE SQL;
 
 -- Fill in the shape_dist_traveled field using stop and shape geometries. 
-CREATE OR REPLACE FUNCTION gtfs_dist_update()
-  RETURNS TRIGGER AS $dist_update$
+CREATE OR REPLACE FUNCTION gtfs_dist_insert()
+  RETURNS TRIGGER AS $$
   BEGIN
-  WITH max AS (
-    -- fast because of index
-    SELECT feed_index, trip_id, max(stop_sequence) AS seq
-    FROM gtfs_stop_times
-    GROUP BY feed_index, trip_id
-  ), a AS (
+  NEW.shape_dist_traveled := (
+    SELECT (
+        array_agg(ST_LineLocatePoint(route.the_geom, ST_ClosestPoint(route.the_geom, stop.the_geom)) * route.length
+        ORDER BY feed_index DESC)
+      )[1]
+    FROM gtfs_trips
+      LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
+      LEFT JOIN gtfs_stops as stop USING (feed_index)
+      WHERE trip_id = NEW.trip_id
+        AND stop_id = NEW.stop_id
+  )::NUMERIC;
+  RETURN NEW;
+  END;
+  $$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER gtfs_stop_times_dist_row_trigger BEFORE INSERT ON gtfs_stop_times
+  FOR EACH ROW
+  WHEN (NEW.shape_dist_traveled IS NULL)
+  EXECUTE PROCEDURE gtfs_dist_insert();
+
+-- Correct out-of-order shape_dist_traveled fields.
+CREATE OR REPLACE FUNCTION gtfs_dist_update()
+  RETURNS TRIGGER AS $$
+  BEGIN
+  WITH fi AS (SELECT MAX(feed_index) AS max FROM gtfs_feed_info),
+  d as (
     SELECT
       feed_index,
       trip_id,
       stop_id,
-      stop_sequence,
-      ROUND(careful_locate(route.the_geom, stop.the_geom, stop_sequence::numeric / max.seq) * route.length, 2) AS dist
-    FROM gtfs_stop_times
-      LEFT JOIN gtfs_trips USING (feed_index, trip_id)
-      LEFT JOIN max USING (feed_index, trip_id)
-      LEFT JOIN gtfs_shape_geoms AS route USING (feed_index, shape_id)
-      LEFT JOIN gtfs_stops as stop USING (feed_index, stop_id)
-    WHERE shape_dist_traveled IS NULL
+      coalesce(lag(shape_dist_traveled) over (trip), 0)::numeric AS lag,
+      shape_dist_traveled AS dist,
+      lead(shape_dist_traveled::numeric) over (trip) AS lead
+    FROM gtfs_stop_times, fi
+    WHERE feed_index = fi.max
+    WINDOW trip AS (PARTITION BY feed_index, trip_id ORDER BY stop_sequence)
   )
-  UPDATE gtfs_stop_times SET shape_dist_traveled = a.dist
-  FROM a
-  WHERE gtfs_stop_times.feed_index = a.feed_index
-    AND gtfs_stop_times.trip_id = a.trip_id
-    AND gtfs_stop_times.stop_sequence = a.stop_sequence
-    AND gtfs_stop_times.stop_id = a.stop_id
-    AND shape_dist_traveled IS NULL;
+  UPDATE gtfs_stop_times s
+    SET shape_dist_traveled = safe_locate(r.the_geom, p.the_geom, lag, coalesce(lead, length), length)
+  FROM d
+    LEFT JOIN gtfs_stops p USING (feed_index, stop_id)
+    LEFT JOIN gtfs_trips USING (feed_index, trip_id)
+    LEFT JOIN gtfs_shape_geoms r USING (feed_index, shape_id)
+  WHERE
+      (s.feed_index, s.trip_id, s.stop_id) = (d.feed_index, d.trip_id, d.stop_id)
+      AND COALESCE(lead, length) > lag
+      AND (dist > COALESCE(lead, length) OR dist < lag)
   RETURN NULL;
   END;
-  $dist_update$
+  $$
 LANGUAGE plpgsql;
 
-CREATE TRIGGER gtfs_stop_times_dist_trigger AFTER INSERT ON gtfs_stop_times
+CREATE TRIGGER gtfs_stop_times_dist_stmt_trigger AFTER INSERT ON gtfs_stop_times
   FOR EACH STATEMENT EXECUTE PROCEDURE gtfs_dist_update();
 
 CREATE TABLE gtfs_frequencies (
