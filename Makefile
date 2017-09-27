@@ -1,14 +1,26 @@
 SHELL = bash
 
-TABLES = agency calendar_dates \
-	calendar routes \
-	shapes stop_times \
-	stops trips \
+TABLES = stop_times trips routes \
+	calendar_dates calendar \
+	shapes stops \
 	transfers frequencies \
-	fare_attributes fare_rules feed_info
+	fare_attributes fare_rules agency feed_info
 
-PG_DATABASE = 
+PG_DATABASE ?= 
 PSQLFLAGS =
+
+ifdef PG_HOST
+PSQLFLAGS += --host=$(PG_HOST)
+endif
+
+ifdef PG_PORT
+PSQLFLAGS += --port=$(PG_USER)
+endif
+
+ifdef PG_USER
+PSQLFLAGS += --username=$(PG_USER)
+endif
+
 PSQL = psql $(PG_DATABASE) $(PSQLFLAGS)
 
 .PHONY: all load vacuum init clean \
