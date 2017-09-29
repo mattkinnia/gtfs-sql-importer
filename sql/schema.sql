@@ -345,13 +345,13 @@ CREATE OR REPLACE FUNCTION safe_locate
   RETURNS numeric AS $$
     -- Multiply the fractional distance also the substring by the substring,
     -- then add the start distance
-    SELECT start + ST_LineLocatePoint(
+    SELECT LEAST(length, GREATEST(0, start) + ST_LineLocatePoint(
       ST_LineSubstring(route, GREATEST(0, start / length), LEAST(1, finish / length)),
       point
     )::numeric * (
       -- The absolute distance between start and finish
       LEAST(length, finish) - GREATEST(0, start)
-    );
+    ));
   $$ LANGUAGE SQL;
 
 -- Fill in the shape_dist_traveled field using stop and shape geometries. 
@@ -383,21 +383,21 @@ CREATE TRIGGER gtfs_stop_times_dist_row_trigger BEFORE INSERT ON gtfs_stop_times
 CREATE OR REPLACE FUNCTION gtfs_dist_update()
   RETURNS TRIGGER AS $$
   BEGIN
-  WITH fi AS (SELECT MAX(feed_index) AS max FROM gtfs_feed_info),
+  WITH f AS (SELECT MAX(feed_index) AS feed_index FROM gtfs_feed_info),
   d as (
     SELECT
       feed_index,
       trip_id,
       stop_id,
-      coalesce(lag(shape_dist_traveled) over (trip), 0)::numeric AS lag,
+      coalesce(lag(shape_dist_traveled) over (trip), 0) AS lag,
       shape_dist_traveled AS dist,
-      lead(shape_dist_traveled::numeric) over (trip) AS lead
-    FROM gtfs_stop_times, fi
-    WHERE feed_index = fi.max
+      lead(shape_dist_traveled) over (trip) AS lead
+    FROM gtfs_stop_times
+      INNER JOIN f USING (feed_index)
     WINDOW trip AS (PARTITION BY feed_index, trip_id ORDER BY stop_sequence)
   )
   UPDATE gtfs_stop_times s
-    SET shape_dist_traveled = safe_locate(r.the_geom, p.the_geom, lag, coalesce(lead, length), length)
+    SET shape_dist_traveled = safe_locate(r.the_geom, p.the_geom, lag::numeric, coalesce(lead, length)::numeric, length::numeric)
   FROM d
     LEFT JOIN gtfs_stops p USING (feed_index, stop_id)
     LEFT JOIN gtfs_trips USING (feed_index, trip_id)
@@ -405,7 +405,7 @@ CREATE OR REPLACE FUNCTION gtfs_dist_update()
   WHERE
       (s.feed_index, s.trip_id, s.stop_id) = (d.feed_index, d.trip_id, d.stop_id)
       AND COALESCE(lead, length) > lag
-      AND (dist > COALESCE(lead, length) OR dist < lag)
+      AND (dist > COALESCE(lead, length) OR dist < lag);
   RETURN NULL;
   END;
   $$

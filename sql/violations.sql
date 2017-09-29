@@ -82,3 +82,36 @@ SELECT 'gtfs_transfers_service_fkey', count(distinct (feed_index, service_id))
   FROM gtfs_transfers a
     LEFT JOIN gtfs_calendar b using (feed_index, service_id)
   WHERE coalesce(b.monday, b.friday) IS NULL;
+
+-- Find out-of-order stops for the most recent feed added.
+-- Change the first subquery to select different feeds.
+WITH
+  f AS (SELECT MAX(feed_index) AS feed_index FROM gtfs_feed_info),
+  d AS (
+    SELECT
+      feed_index,
+      trip_id,
+      stop_id,
+      stop_sequence,
+      coalesce(lag(shape_dist_traveled) over (trip), 0) AS lag,
+      shape_dist_traveled AS dist,
+      (lead(shape_dist_traveled) over (trip)) AS lead
+    FROM gtfs_stop_times
+      INNER JOIN f USING (feed_index)
+    WINDOW trip AS (PARTITION BY feed_index, trip_id ORDER BY stop_sequence)
+  )
+  SELECT feed_index,
+    trip_id,
+    route_id,
+    stop_id,
+    stop_sequence,
+    lag::numeric(9, 3),
+    dist::numeric(9, 3), 
+    coalesce(lead, length)::numeric(9, 3) as lead,
+    length::numeric(9, 3)
+  FROM d
+    LEFT JOIN gtfs_trips trip USING (feed_index, trip_id)
+    LEFT JOIN gtfs_shape_geoms shape USING (feed_index, shape_id)
+  WHERE
+      COALESCE(lead, length) > lag
+      AND (dist > COALESCE(lead, length) OR dist < lag);
