@@ -1,33 +1,48 @@
+language: minimal
+
 services:
   - postgresql
+
+addons:
+  postgresql: "9.5"
+  apt:
+    packages:
+      - postgresql-9.5-postgis-2.3
 
 git:
   depth: 3
 
 # define several feeds here
 env:
-  - FEED=greater-cleveland-regional-transit-authority/214
-  - FEED=abq-ride/52
-  - FEED=connecticut-transit/323/gtfs.zip
-  - FEED=actv/631
-  - FEED=transperth/2
-  - FEED=greenbus-thailand/784
-  - FEED=subterraneos-de-buenos-aires/541
+  global:
+     - PG_USER=postgres
+     - PG_DATABASE=postgres
+
+  matrix:
+    - FEED=greater-cleveland-regional-transit-authority/214
+    - FEED=abq-ride/52
+    - FEED=connecticut-transit/323/gtfs.zip
+    - FEED=actv/631
+    - FEED=transperth/2
+    - FEED=greenbus-thailand/784
+    - FEED=subterraneos-de-buenos-aires/541
 
 before_install:
   - psql --version
   - make --version
-  - psql -U postgres -c "CREATE EXTENSION postgis; SELECT PostGIS_full_version();"
+
+install:
+  - make -e init
+  - psql -U postgres -c "select postgis_full_version();"
 
 # download latest GTFS data
-install:
-  - curl --create-dirs -L -o gtfs.zip http://transitfeeds.com/p/${FEED}/latest/download
+before_script:
+  - curl -Lo gtfs.zip http://transitfeeds.com/p/${FEED}/latest/download
+  - make -e drop_constraints
 
 script:
-  - make init PSQLFLAGS="-U postgres -q"
-  - make drop_constraints PSQLFLAGS="-U postgres -q"
-  - make load GTFS=gtfs.zip PSQLFLAGS="-U postgres -q"
-  - make add_constraints PSQLFLAGS="-U postgres -q"
+  - make -e load GTFS=gtfs.zip
+  - make -e add_constraints
 
 after_script:
   - psql -U postgres -c "SELECT * FROM gtfs_feed_info"
