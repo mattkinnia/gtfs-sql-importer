@@ -1,7 +1,8 @@
 -- gtfs_routes
 
 ALTER TABLE gtfs_routes
-    DROP CONSTRAINT gtfs_routes_fkey CASCADE,
+    DROP CONSTRAINT gtfs_routes_fkey CASCADE;
+ALTER TABLE gtfs_routes
     DROP CONSTRAINT gtfs_route_types_fkey CASCADE;
 
 -- gtfs_fare_attributes
@@ -17,20 +18,24 @@ ALTER TABLE gtfs_calendar_dates
 -- gtfs_fare_rules
 
 ALTER TABLE gtfs_fare_rules
-    DROP CONSTRAINT gtfs_fare_rules_service_fkey CASCADE,
-    DROP CONSTRAINT gtfs_fare_rules_route_id_fkey CASCADE,
+    DROP CONSTRAINT gtfs_fare_rules_service_fkey CASCADE;
+ALTER TABLE gtfs_fare_rules
+    DROP CONSTRAINT gtfs_fare_rules_route_id_fkey CASCADE;
+ALTER TABLE gtfs_fare_rules
     DROP CONSTRAINT gtfs_fare_rules_fare_id_fkey CASCADE;
 
 -- gtfs_trips
 
 ALTER TABLE gtfs_trips
-    DROP CONSTRAINT gtfs_trips_route_id_fkey CASCADE,
+    DROP CONSTRAINT gtfs_trips_route_id_fkey CASCADE;
+ALTER TABLE gtfs_trips
     DROP CONSTRAINT gtfs_trips_calendar_fkey CASCADE;
 
 -- gtfs_stop_times
 
 ALTER TABLE gtfs_stop_times
-    DROP CONSTRAINT gtfs_stop_times_trips_fkey CASCADE,
+    DROP CONSTRAINT gtfs_stop_times_trips_fkey CASCADE;
+ALTER TABLE gtfs_stop_times
     DROP CONSTRAINT gtfs_stop_times_stops_fkey CASCADE;
 
 -- gtfs_frequencies
@@ -41,8 +46,12 @@ ALTER TABLE gtfs_frequencies
 -- gtfs_transfers
 
 ALTER TABLE gtfs_transfers
-    DROP CONSTRAINT gtfs_transfers_from_stop_fkey CASCADE,
-    DROP CONSTRAINT gtfs_transfers_to_stop_fkey CASCADE,
-    DROP CONSTRAINT gtfs_transfers_from_route_fkey CASCADE,
-    DROP CONSTRAINT gtfs_transfers_to_route_fkey CASCADE,
+    DROP CONSTRAINT gtfs_transfers_from_stop_fkey CASCADE;
+ALTER TABLE gtfs_transfers
+    DROP CONSTRAINT gtfs_transfers_to_stop_fkey CASCADE;
+ALTER TABLE gtfs_transfers
+    DROP CONSTRAINT gtfs_transfers_from_route_fkey CASCADE;
+ALTER TABLE gtfs_transfers
+    DROP CONSTRAINT gtfs_transfers_to_route_fkey CASCADE;
+ALTER TABLE gtfs_transfers
     DROP CONSTRAINT gtfs_transfers_service_fkey CASCADE;
