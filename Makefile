@@ -48,7 +48,7 @@ clean:
 	done;
 
 init: sql/schema.sql
-	-createdb $(PG_DATABASE)
+	-psql $(PSQLFLAGS) -c "create database $(PG_DATABASE);"
 	-$(PSQL) -c "CREATE EXTENSION postgis"
 	$(PSQL) -f $<
 	$(PSQL) -c "\copy gtfs_route_types FROM 'data/route_types.txt'"
