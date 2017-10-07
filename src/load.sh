@@ -17,7 +17,7 @@ function import_stdin()
     # remove possible BOM
     hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1 | awk '{sub(/^\xef\xbb\xbf/,"")}{print}')
     echo "COPY gtfs_${1}" 1>&2
-    unzip -p "$ZIP" "${1}.txt" | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
+    unzip -p "$ZIP" "${1}.txt" | sed 's/,""/,/g' | psql ${PSQLFLAGS} -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
 }
 
 ADD_DATES=
