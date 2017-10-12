@@ -36,7 +36,7 @@ ALTER TABLE gtfs_stop_times
   ADD CONSTRAINT gtfs_stop_times_pkey
   PRIMARY KEY (feed_index, trip_id, stop_sequence);
 
-CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (trip_id, stop_id);
+CREATE INDEX gtfs_stop_times_key ON gtfs_stop_times (feed_index, trip_id, stop_id);
 CREATE INDEX arr_time_index ON gtfs_stop_times (arrival_time_seconds);
 CREATE INDEX dep_time_index ON gtfs_stop_times (departure_time_seconds);
 
