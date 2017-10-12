@@ -272,7 +272,7 @@ CREATE TRIGGER gtfs_shape_geom_trigger AFTER INSERT ON gtfs_shapes
 CREATE TABLE gtfs_shape_geoms (
   feed_index int not null,
   shape_id text not null,
-  length numeric not null,
+  length numeric(12, 2) not null,
   CONSTRAINT gtfs_shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
 -- Add the_geom column to the gtfs_shape_geoms table - a 2D linestring geometry
