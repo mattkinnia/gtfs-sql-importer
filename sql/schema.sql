@@ -291,6 +291,8 @@ CREATE TABLE gtfs_trips (
   wheelchair_accessible int REFERENCES gtfs_wheelchair_accessible(wheelchair_accessible),
 
   -- unofficial features
+  direction text default null,
+  schd_trip_id text default null,
   trip_type text default null,
   exceptional int default null,
   bikes_allowed int default null,
