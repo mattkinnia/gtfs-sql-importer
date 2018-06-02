@@ -14,8 +14,8 @@ function import_stdin()
     local hed
     # remove possible BOM
     hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1 | awk '{sub(/^\xef\xbb\xbf/,"")}{print}')
-    echo "COPY gtfs_${1}" 1>&2
-    unzip -p "$ZIP" "${1}.txt" | sed 's/,""/,/g' | psql -c "COPY gtfs_${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
+    echo "COPY gtfs.${1}" 1>&2
+    unzip -p "$ZIP" "${1}.txt" | sed 's/,""/,/g' | psql -c "COPY gtfs.${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
 }
 
 ADD_DATES=
@@ -24,17 +24,17 @@ if [[ "${FILES/feed_info}" != "$FILES" ]]; then
     # Contains feed info, so load that into the table
     echo "Loading feed_info from dataset"
     import_stdin "feed_info"
-    psql -c "UPDATE gtfs_feed_info SET feed_file = '$1' WHERE feed_index = (SELECT max(feed_index) FROM gtfs_feed_info)"
+    psql -c "UPDATE gtfs.feed_info SET feed_file = '$1' WHERE feed_index = (SELECT max(feed_index) FROM gtfs.feed_info)"
 else
     ADD_DATES=true
     # get the min and max calendar dates for this
     echo "No feed_info file found, constructing one"
-    echo "INSERT INTO gtfs_feed_info" 1>&2
-    psql -c "INSERT INTO gtfs_feed_info (feed_file) VALUES ('$1');"
+    echo "INSERT INTO gtfs.feed_info" 1>&2
+    psql -c "INSERT INTO gtfs.feed_info (feed_file) VALUES ('$1');"
 fi
 
 # Save the current feed_index
-feed_index=$(psql --pset format=unaligned -t -c "SELECT max(feed_index) FROM gtfs_feed_info")
+feed_index=$(psql --pset format=unaligned -t -c "SELECT max(feed_index) FROM gtfs.feed_info")
 
 echo "SET feed_index = $feed_index" 1>&2
 
@@ -42,19 +42,19 @@ echo "SET feed_index = $feed_index" 1>&2
 for table in $TABLES; do
     if [[ ${FILES/${table}.txt} != "$FILES" ]]; then
         # set default feed_index
-        psql -c "ALTER TABLE gtfs_${table} ALTER COLUMN feed_index SET DEFAULT ${feed_index}"
+        psql -c "ALTER TABLE gtfs.${table} ALTER COLUMN feed_index SET DEFAULT ${feed_index}"
 
         # read it into db
         import_stdin "$table"
 
         # unset default feed_index
-        psql -c "ALTER TABLE gtfs_${table} ALTER COLUMN feed_index DROP DEFAULT"
+        psql -c "ALTER TABLE gtfs.${table} ALTER COLUMN feed_index DROP DEFAULT"
     fi
 done
 
 if [ -n "$ADD_DATES" ]; then
-    echo "UPDATE gtfs_feed_info"
-    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_start_date=s, feed_end_date=e FROM (SELECT MIN(start_date) AS s, MAX(end_date) AS e FROM gtfs_calendar WHERE feed_index=${feed_index}) a WHERE feed_index = ${feed_index}"
+    echo "UPDATE gtfs.feed_info"
+    psql ${PSQLFLAGS} -c "UPDATE gtfs.feed_info SET feed_start_date=s, feed_end_date=e FROM (SELECT MIN(start_date) AS s, MAX(end_date) AS e FROM gtfs.calendar WHERE feed_index=${feed_index}) a WHERE feed_index = ${feed_index}"
 else
-    psql ${PSQLFLAGS} -c "UPDATE gtfs_feed_info SET feed_file ='$1' WHERE feed_index = ${feed_index}"
+    psql ${PSQLFLAGS} -c "UPDATE gtfs.feed_info SET feed_file ='$1' WHERE feed_index = ${feed_index}"
 fi

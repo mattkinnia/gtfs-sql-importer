@@ -6,7 +6,7 @@ Quick & easy import of GTFS data into a PostgreSQL database.
 
 ## Requirements
 
-* PostGres database (9.4+) with a PostGIS (2.2+) extension
+* PostGres database (9.5+) with a PostGIS (2.2+) extension
 
 ## Initial Import
 
@@ -37,6 +37,10 @@ make load GTFS=gtfs.zip
 ````
 
 If you're connecting over the socket, and your postgres username and database match your system username, you don't have to use environment variables.
+
+### Schema
+
+By default, your GTFS data will be loaded into a schema named `gtfs`. You can always rename it when you're done.
 
 ## Big datasets
 

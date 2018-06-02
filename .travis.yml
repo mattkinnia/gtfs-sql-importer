@@ -45,6 +45,6 @@ script:
   - make -e add_constraints
 
 after_script:
-  - psql -U postgres -c "SELECT * FROM gtfs_feed_info"
-  - psql -U postgres -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs_stop_times LIMIT 10"
-  - psql -U postgres -c "SELECT feed_index, shape_id, length FROM gtfs_shape_geoms LIMIT 10"
+  - psql -U postgres -c "SELECT * FROM gtfs.feed_info"
+  - psql -U postgres -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs.stop_times LIMIT 10"
+  - psql -U postgres -c "SELECT feed_index, shape_id, length FROM gtfs.shape_geoms LIMIT 10"
