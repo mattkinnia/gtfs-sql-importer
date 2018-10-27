@@ -363,15 +363,17 @@ CREATE OR REPLACE FUNCTION gtfs.dist_insert()
   RETURNS TRIGGER AS $$
   BEGIN
   NEW.shape_dist_traveled := (
-    SELECT (
-        array_agg(ST_LineLocatePoint(route.the_geom, ST_ClosestPoint(route.the_geom, stop.the_geom)) * route.length
-        ORDER BY feed_index DESC)
-      )[1]
-    FROM gtfs.trips
-      LEFT JOIN gtfs.shape_geoms AS route USING (feed_index, shape_id)
-      LEFT JOIN gtfs.stops as stop USING (feed_index)
-      WHERE trip_id = NEW.trip_id
-        AND stop_id = NEW.stop_id
+    SELECT
+      ST_LineLocatePoint(route.the_geom, stop.the_geom) * route.length
+    FROM gtfs.stops as stop
+      LEFT JOIN gtfs.trips ON (stop.feed_index=trips.feed_index AND trip_id=NEW.trip_id)
+      LEFT JOIN gtfs.shape_geoms AS route ON (route.feed_index = stop.feed_index and trips.shape_id = route.shape_id)
+      WHERE stop_id = NEW.stop_id
+        AND stop.feed_index = COALESCE(NEW.feed_index::integer, (
+          SELECT column_default::integer
+          FROM information_schema.columns
+          WHERE (table_schema, table_name, column_name) = ('gtfs', 'stop_times', 'feed_index')
+        ))
   )::NUMERIC;
   RETURN NEW;
   END;
