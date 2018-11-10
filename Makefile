@@ -34,6 +34,11 @@ clean:
 	sed 's/\([a-z_]*\)/DELETE FROM gtfs.\1 WHERE feed_index = $(FEED_INDEX);/g' | \
 	$(PSQL)
 
+truncate:
+	echo $(TABLES) | \
+	sed 's/\([a-z_]*\)/TRUNCATE TABLE gtfs.\1 RESTART IDENTITY CASCADE;/g' | \
+	$(PSQL)
+
 init: sql/schema.sql
 	$(PSQL) -f $<
 	$(PSQL) -c "\copy gtfs.route_types FROM 'data/route_types.txt'"
