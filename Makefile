@@ -7,7 +7,7 @@ TABLES = stop_times trips routes \
 	fare_attributes fare_rules agency feed_info
 
 PGUSER ?= $(USER)
-PGDATABASE ?= $(USER)
+PGDATABASE ?= $(PGUSER)
 PSQL = psql $(PSQLFLAGS)
 
 .PHONY: all load vacuum init clean \

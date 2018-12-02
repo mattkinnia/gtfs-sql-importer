@@ -4,19 +4,19 @@ services:
   - postgresql
 
 addons:
-  postgresql: "9.5"
+  postgresql: "10"
   apt:
     packages:
-      - postgresql-9.5-postgis-2.3
+    - postgresql-10
+    - postgresql-client-10
 
 git:
   depth: 3
 
-# define several feeds here
 env:
   global:
-     - PG_USER=postgres
-     - PG_DATABASE=postgres
+    - PGUSER=postgres
+    - PGDATABASE=postgres
 
   matrix:
     - FEED=greater-cleveland-regional-transit-authority/214
@@ -28,23 +28,28 @@ env:
     - FEED=subterraneos-de-buenos-aires/541
 
 before_install:
-  - psql --version
   - make --version
-
-install:
-  - make -e init
-  - psql -U postgres -c "select postgis_full_version();"
-
-# download latest GTFS data
-before_script:
+  - psql --version
+  - /bin/bash -c "DEBIAN_FRONTEND=noninteractive sudo apt-get install -y tzdata"
+  - sudo ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+  - sudo dpkg-reconfigure --frontend noninteractive tzdata
+  - sudo apt-get update -qq
+  - sudo apt-get install -y postgis
+  - sudo -u postgres psql -c "CREATE EXTENSION postgis;"
+  # download latest GTFS data
   - curl -Lo gtfs.zip http://transitfeeds.com/p/${FEED}/latest/download
-  - make -e drop_constraints
+  - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/*/main/pg_hba.conf
+  - sudo service postgresql restart
+  - sleep 1
 
-script:
-  - make -e load GTFS=gtfs.zip
-  - make -e add_constraints
+install: make -e init
+
+before_script: make -e drop_constraints
+
+script: make --warn-undefined-variables -e load GTFS=gtfs.zip
 
 after_script:
+  - make -e add_constraints
   - psql -U postgres -c "SELECT * FROM gtfs.feed_info"
   - psql -U postgres -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs.stop_times LIMIT 10"
   - psql -U postgres -c "SELECT feed_index, shape_id, length FROM gtfs.shape_geoms LIMIT 10"
