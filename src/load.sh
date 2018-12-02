@@ -14,6 +14,8 @@ function import_stdin()
     local hed
     # remove possible BOM
     hed=$(unzip -p "$ZIP" "${1}.txt" | head -n 1 | awk '{sub(/^\xef\xbb\xbf/,"")}{print}')
+    # Add unknown custom columns as text fields
+    echo "$hed" | awk -v FS=, -v table="$1" '{for (i = 1; i <= NF; i++) print "ALTER TABLE gtfs." table " ADD COLUMN IF NOT EXISTS " $i " TEXT;"}' | psql
     echo "COPY gtfs.${1}" 1>&2
     unzip -p "$ZIP" "${1}.txt" | awk '{ sub(/\r$/, ""); sub("^\"\",", ","); gsub(",\"\"", ","); gsub(/,[[:space:]]+/, ","); if (NF > 0) print }' | psql -c "COPY gtfs.${1} (${hed}) FROM STDIN WITH DELIMITER AS ',' HEADER CSV"
 }
