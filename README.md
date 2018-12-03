@@ -1,14 +1,18 @@
 # About
-Quick & easy import of GTFS data into a PostgreSQL database.
 
-* [GTFS (General Transit Feed Specification)](http://code.google.com/transit/spec/transit_feed_specification.html)
-* [Transitfeed](http://transitfeeds.com) (index and archive of GTFS data sets)
+Import GTFS data into a PostgreSQL database. Includes all the constraints in the GTFS spec with some basic tools for dealing with improper data
 
 ## Requirements
 
 * PostGres database (9.5+) with a PostGIS (2.2+) extension
 
-## Initial Import
+## Links
+
+* [GTFS (General Transit Feed Specification)](http://code.google.com/transit/spec/transit_feed_specification.html)
+* [Transitfeeds](http://transitfeeds.com) (index and archive of GTFS data sets)
+* [Transit.land](http://transit.land) A community-edited service with an achive of GTFS.
+
+## Initial import
 
 This importer uses a Makefile to organize a series of SQL commands. The file `src/load.sh` is a shell script that does the heavy lifting of loading the contents of a GTFS zip file into a PostgreSQL database.
 
@@ -55,7 +59,8 @@ GTFS data is regularly updated, and it's reasonable to want to include multiple 
 
 ## Troubleshooting common errors in GTFS data
 
-Most GTFS data has errors in it, so you will likely encounter an error when running the step above.
+Most GTFS data has errors in it, so you may encounter an error when running the step above.
+Common errors include missing `service_id`s, which cause foreign key errors. To load data despite these violations, remove contraints with `make drop_constraints`. Then load the data and try repair the data. When you're ready, restore the constraints with `make add_constraints`.
 
 ### General violation checking
 
@@ -63,6 +68,7 @@ Run the script `sql/violations.sql`, which will perform several queries looking 
 ```
 psql -q -c sql/violations.sql
 ```
+The resulting report will tell you which tables have contrainst violations, and what the errors are. You may wish to manually add these values to your tables.
 
 ### Extra columns
 
