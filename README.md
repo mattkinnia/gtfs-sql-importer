@@ -57,15 +57,16 @@ GTFS data is regularly updated, and it's reasonable to want to include multiple 
 
 Most GTFS data has errors in it, so you will likely encounter an error when running the step above.
 
-### Extra column
+### General violation checking
+
+Run the script `sql/violations.sql`, which will perform several queries looking for rows that violate foreign key constraints and bad geometries in the `shapes` table.
 ```
-ERROR:  column "example_column" of relation "gtfs_example" does not exist
+psql -q -c sql/violations.sql
 ```
-Some GTFS data providers add non-standard columns to their files. Consider adding the column to `sql/schema.sql` and submitting a pull request.
-Solution:
-```
-psql PGDATABASE -c 'ALTER TABLE gtfs_example ADD COLUMN example_column text'
-```
+
+### Extra columns
+
+The loading script checks for extra columns in a GTFS table and adds them to database as `text` columns. You may wish to alter or remove these columns.
 
 ### Null data
 ```
