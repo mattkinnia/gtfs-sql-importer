@@ -8,38 +8,44 @@ TABLES = stop_times trips routes \
 
 PGUSER ?= $(USER)
 PGDATABASE ?= $(PGUSER)
-PSQL = psql $(PSQLFLAGS)
+SCHEMA = gtfs
+psql = $(strip psql -v schema=$(SCHEMA) $(PSQLFLAGS))
 
 .PHONY: all load vacuum init clean \
 	drop_constraints add_constraints \
 	drop_indices add_indices \
 	add_triggers drop_triggers
 
+export PGUSER PGDATABASE PGHOST
+
 all:
 
 add_constraints add_indices add_triggers: add_%: sql/%.sql
-	$(PSQL) -f $<
+	$(psql) -f $<
 
 drop_indices drop_constraints drop_triggers: drop_%: sql/drop_%.sql
-	$(PSQL) -f $<
+	$(psql) -f $<
 
 load: $(GTFS)
-	$(SHELL) src/load.sh $(GTFS)
-	@$(PSQL) -tAc "SELECT 'loaded feed with index: ' || MAX(feed_index)::text FROM gtfs.feed_info"
+	[[ -z "$$(psql -Atc "select feed_index from $(SCHEMA).feed_info where feed_file = '$(GTFS)'")" ]] && \
+		$(SHELL) src/load.sh $(GTFS) $(SCHEMA)
+	@$(psql) -F' ' -tAc "SELECT 'loaded feed with index: ', feed_index FROM $(SCHEMA).feed_info WHERE feed_file = '$(GTFS)'"
 
-vacuum: ; $(PSQL) -c "VACUUM ANALYZE"
+vacuum: ; $(psql) -c "VACUUM ANALYZE"
+
 
 clean:
-	[[ $(words $(FEED_INDEX)) -eq 1 ]] && echo $(TABLES) | \
-	sed 's/\([a-z_]*\)/DELETE FROM gtfs.\1 WHERE feed_index = $(FEED_INDEX);/g' | \
-	$(PSQL)
+	[[ $(words $(FEED_INDEX)) -eq 1 ]] && \
+	for t in $(TABLES); \
+	do echo "DELETE FROM $(SCHEMA).$$t WHERE feed_index = $(FEED_INDEX);"; done \
+	| $(psql); 
 
 truncate:
-	echo $(TABLES) | \
-	sed 's/\([a-z_]*\)/TRUNCATE TABLE gtfs.\1 RESTART IDENTITY CASCADE;/g' | \
-	$(PSQL)
+	for t in $(TABLES); \
+	do echo "TRUNCATE TABLE $(SCHEMA).$$t RESTART IDENTITY CASCADE;"; done \
+	| $(psql)
 
 init: sql/schema.sql
-	$(PSQL) -f $<
-	$(PSQL) -c "\copy gtfs.route_types FROM 'data/route_types.txt'"
-	$(PSQL) -f sql/constraints.sql
+	$(psql) -f $<
+	$(psql) -c "\copy $(SCHEMA).route_types FROM 'data/route_types.txt'"
+	$(psql) -f sql/constraints.sql

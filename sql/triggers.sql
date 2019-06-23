@@ -1,13 +1,15 @@
-CREATE TRIGGER gtfs.shape_geom_trigger AFTER INSERT ON gtfs.shapes
-    FOR EACH STATEMENT EXECUTE PROCEDURE gtfs.shape_update();
+SET search_path to :schema, public;
 
-CREATE TRIGGER gtfs.stop_times_dist_row_trigger BEFORE INSERT ON gtfs.stop_times
+CREATE TRIGGER shape_geom_trigger AFTER INSERT ON :schema.shapes
+    FOR EACH STATEMENT EXECUTE PROCEDURE :schema.shape_update();
+
+CREATE TRIGGER stop_times_dist_row_trigger BEFORE INSERT ON :schema.stop_times
   FOR EACH ROW
   WHEN (NEW.shape_dist_traveled IS NULL)
-  EXECUTE PROCEDURE gtfs.dist_insert();
+  EXECUTE PROCEDURE :schema.dist_insert();
 
-CREATE TRIGGER gtfs.stop_times_dist_stmt_trigger AFTER INSERT ON gtfs.stop_times
-  FOR EACH STATEMENT EXECUTE PROCEDURE gtfs.dist_update();
+CREATE TRIGGER stop_times_dist_stmt_trigger AFTER INSERT ON :schema.stop_times
+  FOR EACH STATEMENT EXECUTE PROCEDURE :schema.dist_update();
 
-CREATE TRIGGER gtfs.stop_geom_trigger BEFORE INSERT OR UPDATE ON gtfs.stops
-    FOR EACH ROW EXECUTE PROCEDURE gtfs.stop_geom_update();
+CREATE TRIGGER stop_geom_trigger BEFORE INSERT OR UPDATE ON :schema.stops
+    FOR EACH ROW EXECUTE PROCEDURE :schema.stop_geom_update();

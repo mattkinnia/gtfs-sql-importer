@@ -1,7 +1,8 @@
-DROP TRIGGER IF EXISTS gtfs.shape_geom_trigger ON gtfs.shapes;
+SET search_path to :schema, public;
+DROP TRIGGER IF EXISTS shape_geom_trigger ON :schema.shapes;
 
-DROP TRIGGER IF EXISTS gtfs.stop_times_dist_row_trigger ON gtfs.stop_times;
+DROP TRIGGER IF EXISTS stop_times_dist_row_trigger ON :schema.stop_times;
 
-DROP TRIGGER IF EXISTS gtfs.stop_times_dist_stmt_trigger ON gtfs.stop_times;
+DROP TRIGGER IF EXISTS stop_times_dist_stmt_trigger ON :schema.stop_times;
 
-DROP TRIGGER IF EXISTS gtfs.stop_geom_trigger ON gtfs.stops;
+DROP TRIGGER IF EXISTS stop_geom_trigger ON :schema.stops;

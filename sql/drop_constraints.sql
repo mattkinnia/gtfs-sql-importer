@@ -1,57 +1,59 @@
--- gtfs.routes
+SET search_path to :schema, public;
 
-ALTER TABLE gtfs.routes
-    DROP CONSTRAINT gtfs_routes_fkey CASCADE;
-ALTER TABLE gtfs.routes
-    DROP CONSTRAINT gtfs_route_types_fkey CASCADE;
+-- :schema.routes
 
--- gtfs.fare_attributes
+ALTER TABLE :schema.routes
+    DROP CONSTRAINT routes_fkey CASCADE;
+ALTER TABLE :schema.routes
+    DROP CONSTRAINT route_types_fkey CASCADE;
 
-ALTER TABLE gtfs.fare_attributes
-    DROP CONSTRAINT gtfs_fare_attributes_fkey CASCADE;
+-- :schema.fare_attributes
 
--- gtfs.calendar_dates
+ALTER TABLE :schema.fare_attributes
+    DROP CONSTRAINT fare_attributes_fkey CASCADE;
 
-ALTER TABLE gtfs.calendar_dates
-    DROP CONSTRAINT gtfs_calendar_fkey CASCADE;
+-- :schema.calendar_dates
 
--- gtfs.fare_rules
+ALTER TABLE :schema.calendar_dates
+    DROP CONSTRAINT calendar_fkey CASCADE;
 
-ALTER TABLE gtfs.fare_rules
-    DROP CONSTRAINT gtfs_fare_rules_service_fkey CASCADE;
-ALTER TABLE gtfs.fare_rules
-    DROP CONSTRAINT gtfs_fare_rules_route_id_fkey CASCADE;
-ALTER TABLE gtfs.fare_rules
-    DROP CONSTRAINT gtfs_fare_rules_fare_id_fkey CASCADE;
+-- :schema.fare_rules
 
--- gtfs.trips
+ALTER TABLE :schema.fare_rules
+    DROP CONSTRAINT fare_rules_service_fkey CASCADE;
+ALTER TABLE :schema.fare_rules
+    DROP CONSTRAINT fare_rules_route_id_fkey CASCADE;
+ALTER TABLE :schema.fare_rules
+    DROP CONSTRAINT fare_rules_fare_id_fkey CASCADE;
 
-ALTER TABLE gtfs.trips
-    DROP CONSTRAINT gtfs_trips_route_id_fkey CASCADE;
-ALTER TABLE gtfs.trips
-    DROP CONSTRAINT gtfs_trips_calendar_fkey CASCADE;
+-- :schema.trips
 
--- gtfs.stop_times
+ALTER TABLE :schema.trips
+    DROP CONSTRAINT trips_route_id_fkey CASCADE;
+ALTER TABLE :schema.trips
+    DROP CONSTRAINT trips_calendar_fkey CASCADE;
 
-ALTER TABLE gtfs.stop_times
-    DROP CONSTRAINT gtfs_stop_times_trips_fkey CASCADE;
-ALTER TABLE gtfs.stop_times
-    DROP CONSTRAINT gtfs_stop_times_stops_fkey CASCADE;
+-- :schema.stop_times
 
--- gtfs.frequencies
+ALTER TABLE :schema.stop_times
+    DROP CONSTRAINT stop_times_trips_fkey CASCADE;
+ALTER TABLE :schema.stop_times
+    DROP CONSTRAINT stop_times_stops_fkey CASCADE;
 
-ALTER TABLE gtfs.frequencies
-    DROP CONSTRAINT gtfs_frequencies_trip_fkey CASCADE;
+-- :schema.frequencies
 
--- gtfs.transfers
+ALTER TABLE :schema.frequencies
+    DROP CONSTRAINT frequencies_trip_fkey CASCADE;
 
-ALTER TABLE gtfs.transfers
-    DROP CONSTRAINT gtfs_transfers_from_stop_fkey CASCADE;
-ALTER TABLE gtfs.transfers
-    DROP CONSTRAINT gtfs_transfers_to_stop_fkey CASCADE;
-ALTER TABLE gtfs.transfers
-    DROP CONSTRAINT gtfs_transfers_from_route_fkey CASCADE;
-ALTER TABLE gtfs.transfers
-    DROP CONSTRAINT gtfs_transfers_to_route_fkey CASCADE;
-ALTER TABLE gtfs.transfers
-    DROP CONSTRAINT gtfs_transfers_service_fkey CASCADE;
+-- :schema.transfers
+
+ALTER TABLE :schema.transfers
+    DROP CONSTRAINT transfers_from_stop_fkey CASCADE;
+ALTER TABLE :schema.transfers
+    DROP CONSTRAINT transfers_to_stop_fkey CASCADE;
+ALTER TABLE :schema.transfers
+    DROP CONSTRAINT transfers_from_route_fkey CASCADE;
+ALTER TABLE :schema.transfers
+    DROP CONSTRAINT transfers_to_route_fkey CASCADE;
+ALTER TABLE :schema.transfers
+    DROP CONSTRAINT transfers_service_fkey CASCADE;
