@@ -26,8 +26,8 @@ DROP INDEX trips_service_id;
 
 ALTER TABLE :schema.stop_times
   DROP CONSTRAINT stop_times_pkey CASCADE;
-DROP INDEX stop_times_key;
 
+DROP INDEX stop_times_key;
 DROP INDEX arr_time_index;
 DROP INDEX dep_time_index;
 
