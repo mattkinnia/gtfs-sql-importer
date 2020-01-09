@@ -318,6 +318,11 @@ CREATE TABLE stop_times (
   feed_index int not null,
   trip_id text not null,
   -- Check that casting to time interval works.
+  -- Interval used rather than Time because: 
+  -- "For times occurring after midnight on the service day, 
+  -- enter the time as a value greater than 24:00:00" 
+  -- https://developers.google.com/transit/gtfs/reference#stop_timestxt
+  -- conversion tool: https://github.com/Bus-Data-NYC/nyc-bus-stats/blob/master/sql/util.sql#L48
   arrival_time interval CHECK (arrival_time::interval = arrival_time::interval),
   departure_time interval CHECK (departure_time::interval = departure_time::interval),
   stop_id text,
