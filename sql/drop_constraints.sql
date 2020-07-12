@@ -39,6 +39,8 @@ ALTER TABLE :schema.stop_times
     DROP CONSTRAINT stop_times_trips_fkey CASCADE;
 ALTER TABLE :schema.stop_times
     DROP CONSTRAINT stop_times_stops_fkey CASCADE;
+ALTER TABLE :schema.stop_times
+  DROP CONSTRAINT continuous_pickup_fkey CASCADE;
 
 -- :schema.frequencies
 

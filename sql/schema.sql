@@ -97,6 +97,11 @@ CREATE TABLE timepoints (
   description text
 );
 
+CREATE TABLE continuous_pickup (
+  continuous_pickup int PRIMARY KEY,
+  description text
+);
+
 CREATE TABLE calendar (
   feed_index integer not null,
   service_id text,
@@ -344,6 +349,8 @@ CREATE TABLE stop_times (
   -- REFERENCES trips (feed_index, trip_id),
   -- CONSTRAINT stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)
   -- REFERENCES stops (feed_index, stop_id),
+  -- CONSTRAINT continuous_pickup_fkey FOREIGN KEY (continuous_pickup)
+  -- REFERENCES continuous_pickup (continuous_pickup),
   CONSTRAINT stop_times_feed_fkey FOREIGN KEY (feed_index)
     REFERENCES feed_info (feed_index) ON DELETE CASCADE
 );
@@ -511,5 +518,11 @@ insert into payment_methods (payment_method, description) values
 insert into timepoints (timepoint, description) values
   (0, 'Times are considered approximate'),
   (1, 'Times are considered exact');
+
+insert into continuous_pickup (continuous_pickup, description) values
+  (0, 'Continuous stopping pickup'),
+  (1, 'No continuous stopping pickup'),
+  (2, 'Must phone agency to arrange continuous stopping pickup'),
+  (3, 'Must coordinate with driver to arrange continuous stopping pickup');
 
 COMMIT;

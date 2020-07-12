@@ -65,6 +65,11 @@ ALTER TABLE stop_times
   FOREIGN KEY (feed_index, stop_id)
   REFERENCES stops (feed_index, stop_id);
 
+ALTER TABLE stop_times
+  ADD CONSTRAINT continuous_pickup_fkey
+  FOREIGN KEY (continuous_pickup)
+  REFERENCES continuous_pickup (continuous_pickup);
+
 -- frequencies
 
 ALTER TABLE frequencies
