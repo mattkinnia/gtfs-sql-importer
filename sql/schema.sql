@@ -38,6 +38,7 @@ CREATE TABLE feed_info (
   feed_end_date date default null,
   feed_id text default null,
   feed_contact_url text default null,
+  feed_contact_email text default null,
   feed_download_date date,
   feed_file text
 );
@@ -177,7 +178,6 @@ CREATE TABLE routes (
   route_url text,
   route_color text,
   route_text_color text,
-  -- unofficial
   route_sort_order integer default null,
   CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id),
   -- CONSTRAINT routes_fkey FOREIGN KEY (feed_index, agency_id)
