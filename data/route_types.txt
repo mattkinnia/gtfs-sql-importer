@@ -1,11 +1,13 @@
-0	Street Level Rail
+0	Street level Rail
 1	Underground Rail
 2	Intercity Rail
 3	Bus
 4	Ferry
-5	Cable Car
-6	Suspended Car
-7	Steep Incline Mode
+5	Cable tram
+6	Aerial lift
+7	Funicular
+11	Trolleybus
+12	Monorail
 100	Railway Service
 101	High Speed Rail Service
 102	Long Distance Trains
