@@ -8,7 +8,7 @@ Import GTFS data into a PostgreSQL database. Includes all the constraints in the
 
 ## Links
 
-* [GTFS (General Transit Feed Specification)](http://code.google.com/transit/spec/transit_feed_specification.html)
+* [GTFS (General Transit Feed Specification)](https://gtfs.org/reference/static)
 * [Transitfeeds](http://transitfeeds.com) (index and archive of GTFS data sets)
 * [Transit.land](http://transit.land) A community-edited service with an achive of GTFS.
 
