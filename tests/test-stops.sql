@@ -1,5 +1,5 @@
 SET search_path TO tap, public;
-SELECT plan(50);
+SELECT plan(51);
 SELECT has_table(:'schema', 'stops', 'table stops exists');
 SELECT has_pk(:'schema', 'stops', 'table stops has primary key');
 SELECT has_column(:'schema', 'stops', 'feed_index', 'table stops has column feed_index');
@@ -50,4 +50,5 @@ SELECT has_column(:'schema', 'stops', 'platform_code', 'table stops has column p
 SELECT col_type_is(:'schema', 'stops', 'platform_code', 'text', 'column stops.platform_code is text');
 SELECT has_column(:'schema', 'stops', 'the_geom', 'table stops has column the_geom');
 SELECT col_type_is(:'schema', 'stops', 'the_geom', 'geometry(Point,4326)', 'column stops.the_geom is geometry(Point,4326)');
+SELECT is_indexed(:'schema', 'stops', ARRAY['the_geom']);
 SELECT * FROM finish();

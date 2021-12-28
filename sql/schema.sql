@@ -1,31 +1,6 @@
+BEGIN;
 CREATE SCHEMA IF NOT EXISTS :schema;
 SET search_path to :schema, public;
-
-DROP TABLE IF EXISTS agency cascade;
-DROP TABLE IF EXISTS stops cascade;
-DROP TABLE IF EXISTS routes cascade;
-DROP TABLE IF EXISTS calendar cascade;
-DROP TABLE IF EXISTS calendar_dates cascade;
-DROP TABLE IF EXISTS fare_attributes cascade;
-DROP TABLE IF EXISTS fare_rules cascade;
-DROP TABLE IF EXISTS shapes cascade;
-DROP TABLE IF EXISTS trips cascade;
-DROP TABLE IF EXISTS stop_times cascade;
-DROP TABLE IF EXISTS frequencies cascade;
-DROP TABLE IF EXISTS shape_geoms CASCADE;
-DROP TABLE IF EXISTS transfers cascade;
-DROP TABLE IF EXISTS timepoints cascade;
-DROP TABLE IF EXISTS feed_info cascade;
-DROP TABLE IF EXISTS route_types cascade;
-DROP TABLE IF EXISTS pickup_dropoff_types cascade;
-DROP TABLE IF EXISTS payment_methods cascade;
-DROP TABLE IF EXISTS location_types cascade;
-DROP TABLE IF EXISTS exception_types cascade;
-DROP TABLE IF EXISTS wheelchair_boardings cascade;
-DROP TABLE IF EXISTS wheelchair_accessible cascade;
-DROP TABLE IF EXISTS transfer_types cascade;
-
-BEGIN;
 
 CREATE TABLE feed_info (
   feed_index serial PRIMARY KEY, -- tracks uploads, avoids key collisions
@@ -146,9 +121,11 @@ CREATE TABLE stops (
   location_type integer default null REFERENCES location_types (location_type),
   vehicle_type int default null,
   platform_code text default null,
+  the_geom geometry(point, 4326),
   CONSTRAINT stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
-SELECT AddGeometryColumn(:'schema', 'stops', 'the_geom', 4326, 'POINT', 2);
+
+CREATE INDEX stop_geom_idx ON stops USING GIST (the_geom);
 
 -- trigger the_geom update with lat or lon inserted
 CREATE OR REPLACE FUNCTION stop_geom_update() RETURNS TRIGGER AS $stop_geom$
@@ -190,7 +167,8 @@ CREATE TABLE calendar_dates (
   feed_index int not null,
   service_id text,
   date date not null,
-  exception_type int REFERENCES exception_types(exception_type) --,
+  exception_type int REFERENCES exception_types(exception_type),
+  CONSTRAINT calendar_dates_pkey PRIMARY KEY (feed_index, service_id, date) --,
   -- CONSTRAINT calendar_fkey FOREIGN KEY (feed_index, service_id)
     -- REFERENCES calendar (feed_index, service_id)
 );
@@ -228,6 +206,7 @@ CREATE TABLE fare_rules (
   contains_id text,
   -- unofficial features
   service_id text default null,
+  CONSTRAINT fare_rules_pkey PRIMARY KEY (feed_index, fare_id, route_id, origin_id, destination_id),
   -- CONSTRAINT fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
   -- REFERENCES calendar (feed_index, service_id),
   -- CONSTRAINT fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
@@ -245,7 +224,8 @@ CREATE TABLE shapes (
   shape_pt_lon double precision not null,
   shape_pt_sequence int not null,
   -- optional
-  shape_dist_traveled double precision default null
+  shape_dist_traveled double precision default null,
+  CONSTRAINT shapes_pk PRIMARY KEY (feed_index, shape_id, shape_pt_sequence)
 );
 
 CREATE INDEX shapes_shape_key ON shapes (shape_id);
@@ -275,7 +255,6 @@ CREATE OR REPLACE FUNCTION shape_update()
   $$ LANGUAGE plpgsql
   SET search_path = :schema, public;
 
-DROP TRIGGER IF EXISTS shape_geom_trigger ON shapes;
 CREATE TRIGGER shape_geom_trigger AFTER INSERT ON shapes
   FOR EACH STATEMENT EXECUTE PROCEDURE shape_update();
 
@@ -284,10 +263,11 @@ CREATE TABLE shape_geoms (
   feed_index int not null,
   shape_id text not null,
   length numeric(12, 2) not null,
+  the_geom geometry(LineString, 4326),
   CONSTRAINT shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
--- Add the_geom column to the shape_geoms table - a 2D linestring geometry
-SELECT AddGeometryColumn(:'schema', 'shape_geoms', 'the_geom', 4326, 'LINESTRING', 2);
+
+CREATE INDEX shape_geoms_geom_idx ON shape_geoms USING GIST (the_geom);
 
 CREATE TABLE trips (
   feed_index int not null,
@@ -397,7 +377,6 @@ CREATE OR REPLACE FUNCTION dist_insert()
   LANGUAGE plpgsql
   SET search_path = :schema, public;
 
-DROP TRIGGER IF EXISTS stop_times_dist_row_trigger ON stop_times;
 CREATE TRIGGER stop_times_dist_row_trigger BEFORE INSERT ON stop_times
   FOR EACH ROW
   WHEN (NEW.shape_dist_traveled IS NULL)
@@ -464,6 +443,7 @@ CREATE TABLE transfers (
   from_route_id text default null,
   to_route_id text default null,
   service_id text default null,
+  CONSTRAINT transfers_pkey PRIMARY KEY (feed_index, from_stop_id, to_stop_id),
   -- CONSTRAINT transfers_from_stop_fkey FOREIGN KEY (feed_index, from_stop_id)
   --  REFERENCES stops (feed_index, stop_id),
   --CONSTRAINT transfers_to_stop_fkey FOREIGN KEY (feed_index, to_stop_id)

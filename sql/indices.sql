@@ -15,6 +15,9 @@ ALTER TABLE :schema.stops
   ADD CONSTRAINT stops_pkey
   PRIMARY KEY (feed_index, stop_id);
 
+CREATE INDEX IF NOT EXISTS stop_geom_idx
+  ON stops USING GIST (the_geom);
+
 ALTER TABLE :schema.routes
   ADD CONSTRAINT routes_pkey
   PRIMARY KEY (feed_index, route_id);
@@ -52,6 +55,9 @@ CREATE INDEX IF NOT EXISTS dep_time_index
 ALTER TABLE :schema.shape_geoms
   ADD CONSTRAINT shape_geom_pkey
   PRIMARY KEY (feed_index, shape_id);
+
+CREATE INDEX IF NOT EXISTS shape_geoms_geom_idx
+  ON shape_geoms USING GIST (the_geom);
 
 ALTER TABLE :schema.frequencies
   ADD CONSTRAINT frequencies_pkey

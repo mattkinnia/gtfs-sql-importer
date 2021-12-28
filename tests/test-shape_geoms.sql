@@ -1,5 +1,5 @@
 SET search_path TO tap, public;
-SELECT plan(10);
+SELECT plan(11);
 SELECT has_table(:'schema', 'shape_geoms', 'table shape_geoms exists');
 SELECT has_pk(:'schema', 'shape_geoms', 'table shape_geoms has primary key');
 SELECT has_column(:'schema', 'shape_geoms', 'feed_index', 'table shape_geoms has column feed_index');
@@ -10,4 +10,5 @@ SELECT has_column(:'schema', 'shape_geoms', 'length', 'table shape_geoms has col
 SELECT col_type_is(:'schema', 'shape_geoms', 'length', 'numeric(12,2)', 'column shape_geoms.length is numeric(12,2)');
 SELECT has_column(:'schema', 'shape_geoms', 'the_geom', 'table shape_geoms has column the_geom');
 SELECT col_type_is(:'schema', 'shape_geoms', 'the_geom', 'geometry(LineString,4326)', 'column shape_geoms.the_geom is geometry(LineString,4326)');
+SELECT is_indexed(:'schema', 'shape_geoms', ARRAY['the_geom']);
 SELECT * FROM finish();
