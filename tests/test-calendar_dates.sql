@@ -1,0 +1,14 @@
+SET search_path TO tap, public;
+SELECT plan(11);
+SELECT has_table(:'schema', 'calendar_dates', 'table calendar_dates exists');
+SELECT has_pk(:'schema', 'calendar_dates', 'table calendar_dates has primary key');
+SELECT is_indexed(:'schema', 'calendar_dates', ARRAY['date']);
+SELECT has_column(:'schema', 'calendar_dates', 'feed_index', 'table calendar_dates has column feed_index');
+SELECT col_type_is(:'schema', 'calendar_dates', 'feed_index', 'integer', 'column calendar_dates.feed_index is integer');
+SELECT has_column(:'schema', 'calendar_dates', 'service_id', 'table calendar_dates has column service_id');
+SELECT col_type_is(:'schema', 'calendar_dates', 'service_id', 'text', 'column calendar_dates.service_id is text');
+SELECT has_column(:'schema', 'calendar_dates', 'date', 'table calendar_dates has column date');
+SELECT col_type_is(:'schema', 'calendar_dates', 'date', 'date', 'column calendar_dates.date is date');
+SELECT has_column(:'schema', 'calendar_dates', 'exception_type', 'table calendar_dates has column exception_type');
+SELECT col_type_is(:'schema', 'calendar_dates', 'exception_type', 'integer', 'column calendar_dates.exception_type is integer');
+SELECT * FROM finish();
