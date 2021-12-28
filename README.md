@@ -4,7 +4,7 @@ Import GTFS data into a PostgreSQL database. Includes all the constraints in the
 
 ## Requirements
 
-* PostGres database (9.5+) with a PostGIS (2.2+) extension
+* Postgresql database (9.5+) with a PostGIS (2.2+) extension
 
 ## Links
 
@@ -18,7 +18,7 @@ This importer uses a Makefile to organize a series of SQL commands. The file `sr
 
 Before importing data, set up database with:
 ```
-PGDATABASE=mydbname
+export PGDATABASE=mydbname
 make init
 ```
 This will create the necessary tables, as well as useful indices and foreign keys. (It will create a database named `mydbname` if one does not exist).
@@ -34,9 +34,7 @@ make load GTFS=gtfs.zip
 
 Use the standard [Postgres environment variables](https://www.postgresql.org/docs/current/static/libpq-envars.html) to specify your connection parameters. For example:
 ````
-PGDATABASE=mydbname
-PGHOST=example.com
-PGUSER=username
+export PGDATABASE=mydbname PGHOST=example.com PGUSER=username
 make load GTFS=gtfs.zip
 ````
 
@@ -44,7 +42,7 @@ If you're connecting over the socket, and your postgres username and database ma
 
 ### Schema
 
-By default, your GTFS data will be loaded into a schema named `gtfs`. You can always rename it when you're done.
+By default, your GTFS data will be loaded into a schema named `gtfs`. You can always rename it when you're done. Setting the `SCHEMA` variable when running make tasks will also address a different schema
 
 ## Big datasets
 
@@ -64,11 +62,11 @@ Common errors include missing `service_id`s, which cause foreign key errors. To 
 
 ### General violation checking
 
-Run the script `sql/violations.sql`, which will perform several queries looking for rows that violate foreign key constraints and bad geometries in the `shapes` table.
+The `check` task will run the script `sql/violations.sql`, which will perform several queries looking for rows that violate foreign key constraints and bad geometries in the `shapes` table.
 ```
-psql -q -c sql/violations.sql
+make check
 ```
-The resulting report will tell you which tables have contrainst violations, and what the errors are. You may wish to manually add these values to your tables.
+The resulting report will tell you which tables have constraint violations, and what the errors are. You may wish to manually add missing values to your tables.
 
 ### Extra columns
 
