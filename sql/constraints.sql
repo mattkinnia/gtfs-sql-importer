@@ -15,14 +15,14 @@ ALTER TABLE routes
   REFERENCES route_types (route_type);
 
 ALTER TABLE routes
-  ADD CONSTRAINT routes_fkey
+  ADD CONSTRAINT routes_agency_id_fkey
   FOREIGN KEY (feed_index, agency_id)
   REFERENCES agency (feed_index, agency_id);
 
 -- calendar_dates
 
 ALTER TABLE calendar_dates
-  ADD CONSTRAINT calendar_fkey
+  ADD CONSTRAINT calendar_dates_service_id_fkey
   FOREIGN KEY (feed_index, service_id)
   REFERENCES calendar (feed_index, service_id);
 

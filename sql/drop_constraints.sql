@@ -8,7 +8,7 @@ ALTER TABLE stops
 -- :schema.routes
 
 ALTER TABLE :schema.routes
-    DROP CONSTRAINT routes_fkey CASCADE;
+    DROP CONSTRAINT routes_agency_id_fkey CASCADE;
 ALTER TABLE :schema.routes
     DROP CONSTRAINT route_types_fkey CASCADE;
 
@@ -20,7 +20,7 @@ ALTER TABLE :schema.fare_attributes
 -- :schema.calendar_dates
 
 ALTER TABLE :schema.calendar_dates
-    DROP CONSTRAINT calendar_fkey CASCADE;
+    DROP CONSTRAINT calendar_dates_service_id_fkey CASCADE;
 
 -- :schema.fare_rules
 

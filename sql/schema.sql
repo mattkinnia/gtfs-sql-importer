@@ -95,6 +95,31 @@ CREATE TABLE calendar (
 );
 CREATE INDEX calendar_service_id ON calendar (service_id);
 
+CREATE OR REPLACE FUNCTION feed_date_update()
+  RETURNS TRIGGER AS $$
+  BEGIN
+    UPDATE feed_info fi SET
+      feed_start_date = CASE WHEN feed_start_date IS NULL THEN start_date ELSE feed_start_date END,
+      feed_end_date   = CASE WHEN feed_end_date IS NULL THEN end_date ELSE feed_end_date END
+    FROM (
+      SELECT feed_index, MIN(start_date) start_date, MAX(end_date) end_date
+      FROM inserted
+      GROUP BY 1
+    ) a
+    WHERE fi.feed_index = a.feed_index
+    AND (fi.feed_start_date IS NULL OR fi.feed_end_date IS NULL);
+    RETURN NULL;
+  END;
+  $$ LANGUAGE plpgsql
+  SET search_path = :schema, public;
+
+COMMENT ON FUNCTION feed_date_update IS
+  'Update start/end dates in feed_info after inserting info calendar_dates. Do not overwrite existing dates';
+
+CREATE TRIGGER calendar_trigger AFTER INSERT ON calendar
+  REFERENCING NEW TABLE AS inserted
+  FOR EACH STATEMENT EXECUTE PROCEDURE feed_date_update();
+
 CREATE TABLE stops (
   feed_index int NOT NULL REFERENCES feed_info (feed_index),
   stop_id text,
@@ -157,7 +182,7 @@ CREATE TABLE routes (
   route_color text,
   route_text_color text,
   route_sort_order integer default null,
-  -- CONSTRAINT routes_fkey FOREIGN KEY (feed_index, agency_id)
+  -- CONSTRAINT routes_agency_id_fkey FOREIGN KEY (feed_index, agency_id)
   --   REFERENCES agency (feed_index, agency_id),
   CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id)
 );
@@ -167,7 +192,7 @@ CREATE TABLE calendar_dates (
   service_id text,
   date date not null,
   exception_type int REFERENCES exception_types(exception_type),
-  -- CONSTRAINT calendar_fkey FOREIGN KEY (feed_index, service_id)
+  -- CONSTRAINT calendar_dates_service_id_fkey FOREIGN KEY (feed_index, service_id)
     -- REFERENCES calendar (feed_index, service_id),
   CONSTRAINT calendar_dates_pkey PRIMARY KEY (feed_index, service_id, date)
 );

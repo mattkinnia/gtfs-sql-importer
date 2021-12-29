@@ -52,7 +52,7 @@ jobs:
           GTFS: tests/data/${{ matrix.gtfs }}.zip
       - run: make add_constraints || echo "could not add constraints"
       - name: Run pgTAP tests
-        run: prove -f --exec 'psql -A -t -v schema=gtfs -f' tests/test-*.sql
+        run: make test
       - run: psql -c "TABLE gtfs.feed_info"
       - run: psql -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs.stop_times LIMIT 10"
       - run: psql -c "SELECT feed_index, shape_id, length FROM gtfs.shape_geoms LIMIT 10"

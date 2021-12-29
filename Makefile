@@ -9,12 +9,14 @@ TABLES = stop_times trips routes \
 
 SCHEMA = gtfs
 
-psql = $(strip psql -v schema=$(SCHEMA) $(PSQLFLAGS))
+psql = $(strip psql -v schema=$(SCHEMA))
 
 .PHONY: all load vacuum init clean \
+	test check truncate \
 	drop_constraints add_constraints \
 	drop_indices add_indices \
-	add_triggers drop_triggers
+	add_triggers drop_triggers \
+	$(addprefix load-,$(TABLES))
 
 all:
 
@@ -24,13 +26,14 @@ add_constraints add_indices add_triggers: add_%: sql/%.sql
 drop_indices drop_constraints drop_triggers: drop_%: sql/drop_%.sql
 	$(psql) -f $<
 
-check:
-	$(psql) -f sql/violations.sql
+load: $(addprefix load-,$(TABLES))
 
-load: $(GTFS)
-	[[ -z "$$(psql -Atc "select feed_index from $(SCHEMA).feed_info where feed_file = '$(GTFS)'")" ]] && \
-		$(SHELL) src/load.sh $(GTFS) $(SCHEMA)
-	@$(psql) -F' ' -tAc "SELECT 'loaded feed with index: ', feed_index FROM $(SCHEMA).feed_info WHERE feed_file = '$(GTFS)'"
+$(filter-out load-feed_info,$(addprefix load-,$(TABLES))): load-%: load-feed_info | $(GTFS)
+	$(SHELL) src/load.sh $| $(SCHEMA) $*
+	@$(psql) -t -A -c "SELECT 'loaded $(SCHEMA).$* with feed index: ' || feed_index::text FROM $(SCHEMA).feed_info WHERE feed_file = '$|'"
+
+load-feed_info: | $(GTFS) ## Insert row into feed_index, if necessary
+	$(SHELL) ./src/load_feed_info.sh $| $(SCHEMA)
 
 vacuum: ; $(psql) -c "VACUUM ANALYZE"
 
@@ -43,12 +46,18 @@ else
 	$(error "make clean" requires FEED_INDEX)
 endif
 
+ifdef FEED_INDEX
+check: ; prove -v --exec 'psql -qAt -v schema=$(SCHEMA) -v feed_index=$(FEED_INDEX) -f' $(wildcard tests/validity/*.sql)
+endif
+
+test: ; prove -j5 -f --exec 'psql -qAt -v schema=$(SCHEMA) -f' $(wildcard tests/test-*.sql)
+
 truncate:
 	for t in $(TABLES); do \
 		echo "TRUNCATE TABLE $(SCHEMA).$$t RESTART IDENTITY CASCADE;"; done \
 	| $(psql) -1
 
 init: sql/schema.sql
-	$(psql) -f $<
-	$(psql) -c "\copy $(SCHEMA).route_types FROM 'data/route_types.txt'"
-	$(psql) -f sql/constraints.sql
+	$(psql) -v ON_ERROR_STOP=on -f $<
+	$(psql) -v ON_ERROR_STOP=on -c "\copy $(SCHEMA).route_types FROM 'data/route_types.txt'"
+	$(psql) -v ON_ERROR_STOP=on -f sql/constraints.sql

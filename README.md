@@ -4,7 +4,7 @@ Import GTFS data into a PostgreSQL database. Includes all the constraints in the
 
 ## Requirements
 
-* Postgresql database (9.5+) with a PostGIS (2.2+) extension
+* Postgresql database (10+) with a PostGIS (2.2+) extension
 
 ## Links
 
@@ -60,13 +60,26 @@ GTFS data is regularly updated, and it's reasonable to want to include multiple 
 Most GTFS data has errors in it, so you may encounter an error when running the step above.
 Common errors include missing `service_id`s, which cause foreign key errors. To load data despite these violations, remove contraints with `make drop_constraints`. Then load the data and try repair the data. When you're ready, restore the constraints with `make add_constraints`.
 
-### General violation checking
+### General validity checking
 
-The `check` task will run the script `sql/violations.sql`, which will perform several queries looking for rows that violate foreign key constraints and bad geometries in the `shapes` table.
+The `check` task will run the scripts in `tests/validity`, which will perform several queries looking for rows that violate foreign key constraints and bad geometries in the `shapes` table. These tests require `prove`, a very common perl testing program and [pgTAP](https://pgtap.org), a Postgresql testing suite. Install it in a new `tap` schema with:
+```bash
+wget https://api.pgxn.org/dist/pgtap/1.2.0/pgtap-1.2.0.zip
+unzip pgtap-1.2.0.zip
+make -C pgtap-1.2.0 sql/pgtap.sql
+PGOPTIONS=--search_path=tap,public psql -c "CREATE SCHEMA tap" -f pgtap-1.2.0/sql/pgtap.sql
 ```
-make check
+Then run the check task, giving the index of the feed to check:
 ```
+make check FEED_INDEX=1
+```
+
 The resulting report will tell you which tables have constraint violations, and what the errors are. You may wish to manually add missing values to your tables.
+
+If you don't have `prove` available, try another [TAP consumer](http://testanything.org/consumers.html). Failing that, you can run the tests with:
+```bash
+find tests -name '*.sql' -print -exec psql -Aqt -v schema=gtfs -f {} \;
+```
 
 ### Extra columns
 
