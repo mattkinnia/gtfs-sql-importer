@@ -1,5 +1,12 @@
 SET search_path to :schema, public;
 
+-- stops
+
+ALTER TABLE stops
+  ADD CONSTRAINT stops_level_id_fkey
+  FOREIGN KEY (feed_index, level_id)
+  REFERENCES levels (feed_index, level_id);
+
 -- routes
 
 ALTER TABLE routes
@@ -103,3 +110,15 @@ ALTER TABLE transfers
   ADD CONSTRAINT transfers_service_fkey
   FOREIGN KEY (feed_index, service_id)
   REFERENCES calendar (feed_index, service_id);
+
+-- attributions
+
+ALTER TABLE attributions
+  ADD CONSTRAINT attributions_trip_id_fkey
+  FOREIGN KEY (feed_index, trip_id)
+  REFERENCES trips (feed_index, trip_id);
+
+ALTER TABLE attributions
+  ADD CONSTRAINT attributions_route_id_fkey
+  FOREIGN KEY (feed_index, route_id)
+  REFERENCES routes (feed_index, route_id);

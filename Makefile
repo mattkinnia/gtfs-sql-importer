@@ -4,6 +4,7 @@ TABLES = stop_times trips routes \
 	calendar_dates calendar \
 	shapes stops \
 	transfers frequencies \
+	attributions translations pathways levels \
 	fare_attributes fare_rules agency feed_info
 
 SCHEMA = gtfs

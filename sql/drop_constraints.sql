@@ -1,5 +1,10 @@
 SET search_path to :schema, public;
 
+-- stops
+
+ALTER TABLE stops
+  DROP CONSTRAINT stops_level_id_fkey CASCADE;
+
 -- :schema.routes
 
 ALTER TABLE :schema.routes
@@ -59,3 +64,10 @@ ALTER TABLE :schema.transfers
     DROP CONSTRAINT transfers_to_route_fkey CASCADE;
 ALTER TABLE :schema.transfers
     DROP CONSTRAINT transfers_service_fkey CASCADE;
+
+-- attributions
+
+ALTER TABLE attributions
+  DROP CONSTRAINT attributions_trip_id_fkey CASCADE;
+ALTER TABLE attributions
+  DROP CONSTRAINT attributions_route_id_fkey CASCADE;

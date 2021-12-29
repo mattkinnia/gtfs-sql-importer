@@ -15,11 +15,12 @@ CREATE TABLE feed_info (
   feed_contact_url text default null,
   feed_contact_email text default null,
   feed_download_date date,
-  feed_file text
+  feed_file text,
+  CONSTRAINT feed_file_uniq UNIQUE (feed_file)
 );
 
 CREATE TABLE agency (
-  feed_index integer REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
   agency_id text default '',
   agency_name text default null,
   agency_url text default null,
@@ -79,7 +80,7 @@ CREATE TABLE continuous_pickup (
 );
 
 CREATE TABLE calendar (
-  feed_index integer not null,
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
   service_id text,
   monday int not null,
   tuesday int not null,
@@ -91,16 +92,14 @@ CREATE TABLE calendar (
   start_date date not null,
   end_date date not null,
   CONSTRAINT calendar_pkey PRIMARY KEY (feed_index, service_id),
-  CONSTRAINT calendar_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
 );
 CREATE INDEX calendar_service_id ON calendar (service_id);
 
 CREATE TABLE stops (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   stop_id text,
-  stop_name text default null,
-  stop_desc text default null,
+  stop_name text,
+  stop_desc text,
   stop_lat double precision,
   stop_lon double precision,
   zone_id text,
@@ -113,15 +112,18 @@ CREATE TABLE stops (
   stop_country text,
   stop_timezone text,
   direction text,
-  position text default null,
-  parent_station text default null,
-  wheelchair_boarding integer default null REFERENCES wheelchair_boardings (wheelchair_boarding),
-  wheelchair_accessible integer default null REFERENCES wheelchair_accessible (wheelchair_accessible),
+  position text,
+  parent_station text,
+  wheelchair_boarding integer REFERENCES wheelchair_boardings (wheelchair_boarding),
+  wheelchair_accessible integer REFERENCES wheelchair_accessible (wheelchair_accessible),
   -- optional
-  location_type integer default null REFERENCES location_types (location_type),
-  vehicle_type int default null,
-  platform_code text default null,
+  location_type integer REFERENCES location_types (location_type),
+  vehicle_type int,
+  level_id text,
+  platform_code text,
   the_geom geometry(point, 4326),
+  -- CONSTRAINT stops_level_id_fkey FOREIGN KEY (feed_index, level_id)
+  --   REFERENCES levels (feed_index, level_id)
   CONSTRAINT stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
 
@@ -145,7 +147,7 @@ CREATE TABLE route_types (
 );
 
 CREATE TABLE routes (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   route_id text,
   agency_id text,
   route_short_name text default '',
@@ -158,13 +160,11 @@ CREATE TABLE routes (
   route_sort_order integer default null,
   CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id),
   -- CONSTRAINT routes_fkey FOREIGN KEY (feed_index, agency_id)
-  --   REFERENCES agency (feed_index, agency_id),
-  CONSTRAINT routes_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  --   REFERENCES agency (feed_index, agency_id)
 );
 
 CREATE TABLE calendar_dates (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   service_id text,
   date date not null,
   exception_type int REFERENCES exception_types(exception_type),
@@ -181,7 +181,7 @@ CREATE TABLE payment_methods (
 );
 
 CREATE TABLE fare_attributes (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   fare_id text not null,
   price double precision not null,
   currency_type text not null,
@@ -192,13 +192,11 @@ CREATE TABLE fare_attributes (
   agency_id text default null,
   CONSTRAINT fare_attributes_pkey PRIMARY KEY (feed_index, fare_id),
   -- CONSTRAINT fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
-  -- REFERENCES agency (feed_index, agency_id),
-  CONSTRAINT fare_attributes_fare_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  -- REFERENCES agency (feed_index, agency_id)
 );
 
 CREATE TABLE fare_rules (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   fare_id text,
   route_id text,
   origin_id text,
@@ -212,13 +210,11 @@ CREATE TABLE fare_rules (
   -- CONSTRAINT fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
   -- REFERENCES fare_attributes (feed_index, fare_id),
   -- CONSTRAINT fare_rules_route_id_fkey FOREIGN KEY (feed_index, route_id)
-  -- REFERENCES routes (feed_index, route_id),
-  CONSTRAINT fare_rules_service_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  -- REFERENCES routes (feed_index, route_id)
 );
 
 CREATE TABLE shapes (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   shape_id text not null,
   shape_pt_lat double precision not null,
   shape_pt_lon double precision not null,
@@ -260,7 +256,7 @@ CREATE TRIGGER shape_geom_trigger AFTER INSERT ON shapes
 
 -- Create new table to store the shape geometries
 CREATE TABLE shape_geoms (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   shape_id text not null,
   length numeric(12, 2) not null,
   the_geom geometry(LineString, 4326),
@@ -270,7 +266,7 @@ CREATE TABLE shape_geoms (
 CREATE INDEX shape_geoms_geom_idx ON shape_geoms USING GIST (the_geom);
 
 CREATE TABLE trips (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   route_id text not null,
   service_id text not null,
   trip_id text not null,
@@ -291,16 +287,14 @@ CREATE TABLE trips (
   -- CONSTRAINT trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
   -- REFERENCES routes (feed_index, route_id),
   -- CONSTRAINT trips_calendar_fkey FOREIGN KEY (feed_index, service_id)
-  -- REFERENCES calendar (feed_index, service_id),
-  CONSTRAINT trips_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  -- REFERENCES calendar (feed_index, service_id)
 );
 
 CREATE INDEX trips_trip_id ON trips (trip_id);
 CREATE INDEX trips_service_id ON trips (feed_index, service_id);
 
 CREATE TABLE stop_times (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   trip_id text not null,
   -- Check that casting to time interval works.
   -- Interval used rather than Time because: 
@@ -330,9 +324,7 @@ CREATE TABLE stop_times (
   -- CONSTRAINT stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)
   -- REFERENCES stops (feed_index, stop_id),
   -- CONSTRAINT continuous_pickup_fkey FOREIGN KEY (continuous_pickup)
-  -- REFERENCES continuous_pickup (continuous_pickup),
-  CONSTRAINT stop_times_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  -- REFERENCES continuous_pickup (continuous_pickup)
 );
 CREATE INDEX stop_times_key ON stop_times (feed_index, trip_id, stop_id);
 CREATE INDEX arr_time_index ON stop_times (arrival_time_seconds);
@@ -418,7 +410,7 @@ CREATE TRIGGER stop_times_dist_stmt_trigger AFTER INSERT ON stop_times
   FOR EACH STATEMENT EXECUTE PROCEDURE dist_update();
 
 CREATE TABLE frequencies (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   trip_id text,
   start_time text not null CHECK (start_time::interval = start_time::interval),
   end_time text not null CHECK (end_time::interval = end_time::interval),
@@ -428,13 +420,11 @@ CREATE TABLE frequencies (
   end_time_seconds int,
   CONSTRAINT frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time),
   -- CONSTRAINT frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
-  --  REFERENCES trips (feed_index, trip_id),
-  CONSTRAINT frequencies_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  --  REFERENCES trips (feed_index, trip_id)
 );
 
 CREATE TABLE transfers (
-  feed_index int not null,
+  feed_index int NOT NULL REFERENCES feed_info (feed_index),
   from_stop_id text,
   to_stop_id text,
   transfer_type int REFERENCES transfer_types(transfer_type),
@@ -453,9 +443,69 @@ CREATE TABLE transfers (
   --CONSTRAINT transfers_to_route_fkey FOREIGN KEY (feed_index, to_route_id)
   --  REFERENCES routes (feed_index, route_id),
   --CONSTRAINT transfers_service_fkey FOREIGN KEY (feed_index, service_id)
-  --  REFERENCES calendar (feed_index, service_id),
-  CONSTRAINT transfers_feed_fkey FOREIGN KEY (feed_index)
-    REFERENCES feed_info (feed_index) ON DELETE CASCADE
+  --  REFERENCES calendar (feed_index, service_id)
+);
+
+CREATE TABLE pathway_modes (
+  pathway_mode integer PRIMARY KEY,
+  description text
+);
+
+CREATE TABLE pathways (
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  pathway_id text,
+  from_stop_id text,
+  to_stop_id text,
+  pathway_mode integer REFERENCES pathway_modes (pathway_mode),
+  is_bidirectional integer,
+  length double precision,
+  traversal_time integer,
+  stair_count integer,
+  max_slope numeric,
+  min_width double precision,
+  signposted_as text,
+  reversed_signposted_as text,
+  PRIMARY KEY (feed_index, pathway_id)
+);
+
+CREATE TABLE levels (
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  level_id text,
+  level_index double precision,
+  level_name text,
+  PRIMARY KEY (feed_index, level_id)
+);
+
+CREATE TABLE translations (
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  table_name text,
+  field_name text,
+  language text,
+  translation text,
+  record_id text,
+  record_sub_id text,
+  field_value text,
+  PRIMARY KEY (feed_index, table_name, field_value, language)
+);
+
+CREATE TABLE attributions (
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  attribution_id text,
+  agency_id text,
+  route_id text,
+  trip_id text,
+  organization_name text,
+  is_producer boolean,
+  is_operator boolean,
+  is_authority boolean,
+  attribution_url text,
+  attribution_email text,
+  attribution_phone text,
+  --CONSTRAINT attributions_trip_id_fkey FOREIGN KEY (feed_index, trip_id)
+  --  REFERENCES trips (feed_index, trip_id),
+  --CONSTRAINT attributions_route_id_fkey FOREIGN KEY (feed_index, route_id)
+  --  REFERENCES routes (feed_index, route_id),
+  PRIMARY KEY (feed_index, attribution_id)
 );
 
 insert into exception_types (exception_type, description) values 
@@ -504,5 +554,14 @@ insert into continuous_pickup (continuous_pickup, description) values
   (1, 'No continuous stopping pickup'),
   (2, 'Must phone agency to arrange continuous stopping pickup'),
   (3, 'Must coordinate with driver to arrange continuous stopping pickup');
+
+insert into pathway_modes (pathway_mode, pathway_mode) values
+  (1, 'walkway'),
+  (2, 'stairs'),
+  (3, 'moving sidewalk/travelator'),
+  (4, 'escalator'),
+  (5, 'elevator'),
+  (6, 'fare gate (or payment gate)'),
+  (7, 'exit gate');
 
 COMMIT;
