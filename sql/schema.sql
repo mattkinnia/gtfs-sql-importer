@@ -91,7 +91,7 @@ CREATE TABLE calendar (
   sunday int not null,
   start_date date not null,
   end_date date not null,
-  CONSTRAINT calendar_pkey PRIMARY KEY (feed_index, service_id),
+  CONSTRAINT calendar_pkey PRIMARY KEY (feed_index, service_id)
 );
 CREATE INDEX calendar_service_id ON calendar (service_id);
 
@@ -137,7 +137,6 @@ CREATE OR REPLACE FUNCTION stop_geom_update() RETURNS TRIGGER AS $stop_geom$
   END;
 $stop_geom$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS stop_geom_trigger ON stops;
 CREATE TRIGGER stop_geom_trigger BEFORE INSERT OR UPDATE ON stops
     FOR EACH ROW EXECUTE PROCEDURE stop_geom_update();
 
@@ -158,9 +157,9 @@ CREATE TABLE routes (
   route_color text,
   route_text_color text,
   route_sort_order integer default null,
-  CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id),
   -- CONSTRAINT routes_fkey FOREIGN KEY (feed_index, agency_id)
-  --   REFERENCES agency (feed_index, agency_id)
+  --   REFERENCES agency (feed_index, agency_id),
+  CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id)
 );
 
 CREATE TABLE calendar_dates (
@@ -168,9 +167,9 @@ CREATE TABLE calendar_dates (
   service_id text,
   date date not null,
   exception_type int REFERENCES exception_types(exception_type),
-  CONSTRAINT calendar_dates_pkey PRIMARY KEY (feed_index, service_id, date) --,
   -- CONSTRAINT calendar_fkey FOREIGN KEY (feed_index, service_id)
-    -- REFERENCES calendar (feed_index, service_id)
+    -- REFERENCES calendar (feed_index, service_id),
+  CONSTRAINT calendar_dates_pkey PRIMARY KEY (feed_index, service_id, date)
 );
 
 CREATE INDEX calendar_dates_dateidx ON calendar_dates (date);
@@ -190,9 +189,9 @@ CREATE TABLE fare_attributes (
   transfer_duration int,
   -- unofficial features
   agency_id text default null,
-  CONSTRAINT fare_attributes_pkey PRIMARY KEY (feed_index, fare_id),
   -- CONSTRAINT fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
-  -- REFERENCES agency (feed_index, agency_id)
+  -- REFERENCES agency (feed_index, agency_id),
+  CONSTRAINT fare_attributes_pkey PRIMARY KEY (feed_index, fare_id)
 );
 
 CREATE TABLE fare_rules (
@@ -204,13 +203,13 @@ CREATE TABLE fare_rules (
   contains_id text,
   -- unofficial features
   service_id text default null,
-  CONSTRAINT fare_rules_pkey PRIMARY KEY (feed_index, fare_id, route_id, origin_id, destination_id),
   -- CONSTRAINT fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
   -- REFERENCES calendar (feed_index, service_id),
   -- CONSTRAINT fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
   -- REFERENCES fare_attributes (feed_index, fare_id),
   -- CONSTRAINT fare_rules_route_id_fkey FOREIGN KEY (feed_index, route_id)
-  -- REFERENCES routes (feed_index, route_id)
+  -- REFERENCES routes (feed_index, route_id),
+  CONSTRAINT fare_rules_pkey PRIMARY KEY (feed_index, fare_id, route_id, origin_id, destination_id)
 );
 
 CREATE TABLE shapes (
@@ -283,11 +282,11 @@ CREATE TABLE trips (
   trip_type text default null,
   exceptional int default null,
   bikes_allowed int default null,
-  CONSTRAINT trips_pkey PRIMARY KEY (feed_index, trip_id),
   -- CONSTRAINT trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
   -- REFERENCES routes (feed_index, route_id),
   -- CONSTRAINT trips_calendar_fkey FOREIGN KEY (feed_index, service_id)
-  -- REFERENCES calendar (feed_index, service_id)
+  -- REFERENCES calendar (feed_index, service_id),
+  CONSTRAINT trips_pkey PRIMARY KEY (feed_index, trip_id)
 );
 
 CREATE INDEX trips_trip_id ON trips (trip_id);
@@ -318,13 +317,13 @@ CREATE TABLE stop_times (
   continuous_pickup  int default null,
   arrival_time_seconds int default null,
   departure_time_seconds int default null,
-  CONSTRAINT stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence),
   -- CONSTRAINT stop_times_trips_fkey FOREIGN KEY (feed_index, trip_id)
   -- REFERENCES trips (feed_index, trip_id),
   -- CONSTRAINT stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)
   -- REFERENCES stops (feed_index, stop_id),
   -- CONSTRAINT continuous_pickup_fkey FOREIGN KEY (continuous_pickup)
-  -- REFERENCES continuous_pickup (continuous_pickup)
+  -- REFERENCES continuous_pickup (continuous_pickup),
+  CONSTRAINT stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence)
 );
 CREATE INDEX stop_times_key ON stop_times (feed_index, trip_id, stop_id);
 CREATE INDEX arr_time_index ON stop_times (arrival_time_seconds);
@@ -405,7 +404,6 @@ CREATE OR REPLACE FUNCTION dist_update()
   $$ LANGUAGE plpgsql
   SET search_path = :schema, public;
 
-DROP TRIGGER IF EXISTS stop_times_dist_stmt_trigger ON stop_times;
 CREATE TRIGGER stop_times_dist_stmt_trigger AFTER INSERT ON stop_times
   FOR EACH STATEMENT EXECUTE PROCEDURE dist_update();
 
@@ -418,9 +416,9 @@ CREATE TABLE frequencies (
   exact_times int,
   start_time_seconds int,
   end_time_seconds int,
-  CONSTRAINT frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time),
   -- CONSTRAINT frequencies_trip_fkey FOREIGN KEY (feed_index, trip_id)
-  --  REFERENCES trips (feed_index, trip_id)
+  --  REFERENCES trips (feed_index, trip_id),
+  CONSTRAINT frequencies_pkey PRIMARY KEY (feed_index, trip_id, start_time)
 );
 
 CREATE TABLE transfers (
@@ -433,7 +431,6 @@ CREATE TABLE transfers (
   from_route_id text default null,
   to_route_id text default null,
   service_id text default null,
-  CONSTRAINT transfers_pkey PRIMARY KEY (feed_index, from_stop_id, to_stop_id),
   -- CONSTRAINT transfers_from_stop_fkey FOREIGN KEY (feed_index, from_stop_id)
   --  REFERENCES stops (feed_index, stop_id),
   --CONSTRAINT transfers_to_stop_fkey FOREIGN KEY (feed_index, to_stop_id)
@@ -443,7 +440,8 @@ CREATE TABLE transfers (
   --CONSTRAINT transfers_to_route_fkey FOREIGN KEY (feed_index, to_route_id)
   --  REFERENCES routes (feed_index, route_id),
   --CONSTRAINT transfers_service_fkey FOREIGN KEY (feed_index, service_id)
-  --  REFERENCES calendar (feed_index, service_id)
+  --  REFERENCES calendar (feed_index, service_id),
+  CONSTRAINT transfers_pkey PRIMARY KEY (feed_index, from_stop_id, to_stop_id)
 );
 
 CREATE TABLE pathway_modes (
@@ -555,7 +553,7 @@ insert into continuous_pickup (continuous_pickup, description) values
   (2, 'Must phone agency to arrange continuous stopping pickup'),
   (3, 'Must coordinate with driver to arrange continuous stopping pickup');
 
-insert into pathway_modes (pathway_mode, pathway_mode) values
+insert into pathway_modes (pathway_mode, description) values
   (1, 'walkway'),
   (2, 'stairs'),
   (3, 'moving sidewalk/travelator'),
