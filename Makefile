@@ -27,21 +27,19 @@ drop_indices drop_constraints drop_triggers: drop_%: sql/drop_%.sql
 	$(psql) -f $<
 
 load: $(addprefix load-,$(TABLES))
+	@$(psql) -t -A -c "SELECT format('* loaded %s with feed index = %s', feed_file, feed_index) FROM $(SCHEMA).feed_info WHERE feed_file = '$(GTFS)'"
 
 $(filter-out load-feed_info,$(addprefix load-,$(TABLES))): load-%: load-feed_info | $(GTFS)
 	$(SHELL) src/load.sh $| $(SCHEMA) $*
-	@$(psql) -t -A -c "SELECT 'loaded $(SCHEMA).$* with feed index: ' || feed_index::text FROM $(SCHEMA).feed_info WHERE feed_file = '$|'"
 
 load-feed_info: | $(GTFS) ## Insert row into feed_index, if necessary
 	$(SHELL) ./src/load_feed_info.sh $| $(SCHEMA)
 
 vacuum: ; $(psql) -c "VACUUM ANALYZE"
 
-clean:
+clean: ## Delete a feed from the DB. Relies on foreign keys for feed_index in each table
 ifdef FEED_INDEX
-	for t in $(TABLES); do \
-		echo "DELETE FROM $(SCHEMA).$$t WHERE feed_index = $(FEED_INDEX);"; done \
-	| $(psql) -1
+	$(psql) -c "DELETE FROM $(SCHEMA).feed_info WHERE feed_index = $(FEED_INDEX)"
 else
 	$(error "make clean" requires FEED_INDEX)
 endif
