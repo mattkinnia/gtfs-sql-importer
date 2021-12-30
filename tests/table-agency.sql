@@ -1,3 +1,4 @@
+BEGIN;
 SET search_path TO tap, public;
 SELECT plan(22);
 SELECT has_table(:'schema', 'agency', 'table agency exists');
@@ -23,3 +24,4 @@ SELECT col_type_is(:'schema', 'agency', 'agency_email', 'text', 'column agency.a
 SELECT has_column(:'schema', 'agency', 'bikes_policy_url', 'table agency has column bikes_policy_url');
 SELECT col_type_is(:'schema', 'agency', 'bikes_policy_url', 'text', 'column agency.bikes_policy_url is text');
 SELECT * FROM finish();
+COMMIT;

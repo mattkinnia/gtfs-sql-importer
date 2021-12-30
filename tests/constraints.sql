@@ -1,6 +1,6 @@
 SET search_path to tap, public;
 
-SELECT plan(18);
+SELECT plan(24);
 
 -- routes
 SELECT col_is_fk(:'schema', 'routes', ARRAY['route_type'], 'routes.route_type is a foreign key');
@@ -33,5 +33,17 @@ SELECT col_is_fk(:'schema', 'transfers', ARRAY['feed_index', 'to_stop_id'], 'tra
 SELECT col_is_fk(:'schema', 'transfers', ARRAY['feed_index', 'from_route_id'], 'transfers.from_route_id is a foreign key');
 SELECT col_is_fk(:'schema', 'transfers', ARRAY['feed_index', 'to_route_id'], 'transfers.to_route_id is a foreign key');
 SELECT col_is_fk(:'schema', 'transfers', ARRAY['feed_index', 'service_id'], 'transfers.service_id is a foreign key');
+
+-- stops
+SELECT col_is_fk(:'schema', 'stops', ARRAY['feed_index','level_id'], 'stops.level_id is a foreign key');
+
+-- shapes
+SELECT col_is_fk(:'schema', 'shapes', ARRAY['feed_index','trip_id'], 'shapes.trip_id is a foreign key');
+SELECT col_is_fk(:'schema', 'shapes', ARRAY['feed_index','stop_id'], 'shapes.stop_id is a foreign key');
+SELECT col_is_fk(:'schema', 'shapes', ARRAY['feed_index','continuous_pickup'], 'shapes.continuous_pickup is a foreign key');
+
+-- attributions
+SELECT col_is_fk(:'schema', 'attributions', ARRAY['feed_index','trip_id'], 'attributions.trip_id is a foreign key');
+SELECT col_is_fk(:'schema', 'attributions', ARRAY['feed_index','route_id'], 'attributions.route_id is a foreign key');
 
 SELECT * FROM finish();

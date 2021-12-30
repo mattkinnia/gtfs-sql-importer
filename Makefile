@@ -50,7 +50,7 @@ ifdef FEED_INDEX
 check: ; prove -v --exec 'psql -qAt -v schema=$(SCHEMA) -v feed_index=$(FEED_INDEX) -f' $(wildcard tests/validity/*.sql)
 endif
 
-test: ; prove -j5 -f --exec 'psql -qAt -v schema=$(SCHEMA) -f' $(wildcard tests/test-*.sql)
+test: ; prove -f --exec 'psql -qAt -v schema=$(SCHEMA) -f' $(wildcard tests/*.sql)
 
 truncate:
 	for t in $(TABLES); do \
