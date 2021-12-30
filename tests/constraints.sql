@@ -1,7 +1,7 @@
 BEGIN;
 SET search_path to tap, public;
 
-SELECT plan(28);
+SELECT plan(30);
 
 SELECT col_is_fk(:'schema', 'routes', ARRAY['route_type'], 'routes.route_type is a foreign key');
 SELECT col_is_fk(:'schema', 'routes', ARRAY['feed_index', 'agency_id'], 'routes.agency_id is a foreign key');
