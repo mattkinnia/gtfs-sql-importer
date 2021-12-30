@@ -60,4 +60,4 @@ truncate:
 init: sql/schema.sql
 	$(psql) -v ON_ERROR_STOP=on -f $<
 	$(psql) -v ON_ERROR_STOP=on -c "\copy $(SCHEMA).route_types FROM 'data/route_types.txt'"
-	$(psql) -v ON_ERROR_STOP=on -f sql/constraints.sql
+	$(psql) -v ON_ERROR_STOP=on -f sql/indices.sql

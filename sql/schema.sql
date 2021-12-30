@@ -93,7 +93,6 @@ CREATE TABLE calendar (
   end_date date not null,
   CONSTRAINT calendar_pkey PRIMARY KEY (feed_index, service_id)
 );
-CREATE INDEX calendar_service_id ON calendar (service_id);
 
 CREATE OR REPLACE FUNCTION feed_date_update()
   RETURNS TRIGGER AS $$
@@ -119,6 +118,14 @@ COMMENT ON FUNCTION feed_date_update IS
 CREATE TRIGGER calendar_trigger AFTER INSERT ON calendar
   REFERENCING NEW TABLE AS inserted
   FOR EACH STATEMENT EXECUTE PROCEDURE feed_date_update();
+
+CREATE TABLE levels (
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  level_id text,
+  level_index double precision,
+  level_name text,
+  PRIMARY KEY (feed_index, level_id)
+);
 
 CREATE TABLE stops (
   feed_index int NOT NULL REFERENCES feed_info (feed_index),
@@ -148,11 +155,10 @@ CREATE TABLE stops (
   platform_code text,
   the_geom geometry(point, 4326),
   CONSTRAINT stops_level_id_fkey FOREIGN KEY (feed_index, level_id)
-    REFERENCES levels (feed_index, level_id)
+    REFERENCES levels (feed_index, level_id),
   CONSTRAINT stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
 
-CREATE INDEX stop_geom_idx ON stops USING GIST (the_geom);
 
 -- trigger the_geom update with lat or lon inserted
 CREATE OR REPLACE FUNCTION stop_geom_update() RETURNS TRIGGER AS $stop_geom$
@@ -184,20 +190,20 @@ CREATE TABLE routes (
   route_sort_order integer default null,
   CONSTRAINT routes_agency_id_fkey FOREIGN KEY (feed_index, agency_id)
     REFERENCES agency (feed_index, agency_id),
+  CONSTRAINT route_types_fkey FOREIGN KEY (route_type)
+    REFERENCES route_types (route_type),
   CONSTRAINT routes_pkey PRIMARY KEY (feed_index, route_id)
 );
-
+  
 CREATE TABLE calendar_dates (
   feed_index int NOT NULL REFERENCES feed_info (feed_index),
   service_id text,
   date date not null,
-  exception_type int REFERENCES exception_types(exception_type),
-  -- CONSTRAINT calendar_dates_service_id_fkey FOREIGN KEY (feed_index, service_id)
-    -- REFERENCES calendar (feed_index, service_id),
+  exception_type int REFERENCES exception_types (exception_type),
+  CONSTRAINT calendar_dates_service_id_fkey FOREIGN KEY (feed_index, service_id)
+    REFERENCES calendar (feed_index, service_id),
   CONSTRAINT calendar_dates_pkey PRIMARY KEY (feed_index, service_id, date)
 );
-
-CREATE INDEX calendar_dates_dateidx ON calendar_dates (date);
 
 CREATE TABLE payment_methods (
   payment_method int PRIMARY KEY,
@@ -249,8 +255,6 @@ CREATE TABLE shapes (
   CONSTRAINT shapes_pk PRIMARY KEY (feed_index, shape_id, shape_pt_sequence)
 );
 
-CREATE INDEX shapes_shape_key ON shapes (shape_id);
-
 CREATE OR REPLACE FUNCTION shape_update()
   RETURNS TRIGGER AS $$
   BEGIN
@@ -288,8 +292,6 @@ CREATE TABLE shape_geoms (
   CONSTRAINT shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
 
-CREATE INDEX shape_geoms_geom_idx ON shape_geoms USING GIST (the_geom);
-
 CREATE TABLE trips (
   feed_index int NOT NULL REFERENCES feed_info (feed_index),
   route_id text not null,
@@ -314,9 +316,6 @@ CREATE TABLE trips (
     REFERENCES calendar (feed_index, service_id),
   CONSTRAINT trips_pkey PRIMARY KEY (feed_index, trip_id)
 );
-
-CREATE INDEX trips_trip_id ON trips (trip_id);
-CREATE INDEX trips_service_id ON trips (feed_index, service_id);
 
 CREATE TABLE stop_times (
   feed_index int NOT NULL REFERENCES feed_info (feed_index),
@@ -351,9 +350,6 @@ CREATE TABLE stop_times (
     REFERENCES continuous_pickup (continuous_pickup),
   CONSTRAINT stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence)
 );
-CREATE INDEX stop_times_key ON stop_times (feed_index, trip_id, stop_id);
-CREATE INDEX arr_time_index ON stop_times (arrival_time_seconds);
-CREATE INDEX dep_time_index ON stop_times (departure_time_seconds);
 
 -- "Safely" locate a point on a (possibly complicated) line by using minimum and maximum distances.
 -- Unlike st_LineLocatePoint, this accepts and returns absolute distances, not fractions
@@ -490,14 +486,6 @@ CREATE TABLE pathways (
   signposted_as text,
   reversed_signposted_as text,
   PRIMARY KEY (feed_index, pathway_id)
-);
-
-CREATE TABLE levels (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
-  level_id text,
-  level_index double precision,
-  level_name text,
-  PRIMARY KEY (feed_index, level_id)
 );
 
 CREATE TABLE translations (
