@@ -8,6 +8,7 @@ CREATE TABLE feed_info (
   feed_publisher_url text default null,
   feed_timezone text default null,
   feed_lang text default null,
+  default_lang text default null,
   feed_version text default null,
   feed_start_date date default null,
   feed_end_date date default null,
@@ -76,6 +77,11 @@ CREATE TABLE timepoints (
 
 CREATE TABLE continuous_pickup (
   continuous_pickup int PRIMARY KEY,
+  description text
+);
+
+CREATE TABLE continuous_drop_off (
+  continuous_drop_off int PRIMARY KEY,
   description text
 );
 
@@ -159,7 +165,6 @@ CREATE TABLE stops (
   CONSTRAINT stops_pkey PRIMARY KEY (feed_index, stop_id)
 );
 
-
 -- trigger the_geom update with lat or lon inserted
 CREATE OR REPLACE FUNCTION stop_geom_update() RETURNS TRIGGER AS $stop_geom$
   BEGIN
@@ -183,11 +188,13 @@ CREATE TABLE routes (
   route_short_name text default '',
   route_long_name text default '',
   route_desc text default '',
-  route_type int REFERENCES route_types(route_type),
+  route_type int,
   route_url text,
   route_color text,
   route_text_color text,
   route_sort_order integer default null,
+  continuous_pickup int default null REFERENCES continuous_pickup (continuous_pickup),
+  continuous_drop_off int default null REFERENCES continuous_drop_off (continuous_drop_off),
   CONSTRAINT routes_agency_id_fkey FOREIGN KEY (feed_index, agency_id)
     REFERENCES agency (feed_index, agency_id),
   CONSTRAINT route_types_fkey FOREIGN KEY (route_type)
@@ -333,21 +340,19 @@ CREATE TABLE stop_times (
   stop_headsign text,
   pickup_type int REFERENCES pickup_dropoff_types(type_id),
   drop_off_type int REFERENCES pickup_dropoff_types(type_id),
+  continuous_pickup int default null REFERENCES continuous_pickup (continuous_pickup),
+  continuous_drop_off int default null REFERENCES continuous_drop_off (continuous_drop_off),
   shape_dist_traveled numeric(10, 2),
   timepoint int REFERENCES timepoints (timepoint),
 
   -- unofficial features
   -- the following are not in the spec
-  continuous_drop_off int default null,
-  continuous_pickup  int default null,
   arrival_time_seconds int default null,
   departure_time_seconds int default null,
   CONSTRAINT stop_times_trips_fkey FOREIGN KEY (feed_index, trip_id)
     REFERENCES trips (feed_index, trip_id),
   CONSTRAINT stop_times_stops_fkey FOREIGN KEY (feed_index, stop_id)
     REFERENCES stops (feed_index, stop_id),
-  CONSTRAINT continuous_pickup_fkey FOREIGN KEY (continuous_pickup)
-    REFERENCES continuous_pickup (continuous_pickup),
   CONSTRAINT stop_times_pkey PRIMARY KEY (feed_index, trip_id, stop_sequence)
 );
 
@@ -566,6 +571,12 @@ insert into continuous_pickup (continuous_pickup, description) values
   (1, 'No continuous stopping pickup'),
   (2, 'Must phone agency to arrange continuous stopping pickup'),
   (3, 'Must coordinate with driver to arrange continuous stopping pickup');
+
+insert into continuous_drop_off (continuous_drop_off, description) values
+  (0, 'Continuous stopping drop-off'),
+  (1, 'No continuous stopping drop-off'),
+  (2, 'Must phone agency to arrange continuous stopping drop-off'),
+  (3, 'Must coordinate with driver to arrange continuous stopping drop-off');
 
 insert into pathway_modes (pathway_mode, description) values
   (1, 'walkway'),

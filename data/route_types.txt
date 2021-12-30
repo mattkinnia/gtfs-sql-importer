@@ -1,7 +1,7 @@
-0	Street level Rail
+0	Street-level Rail (tram, streetcar, light rail)
 1	Underground Rail
-2	Intercity Rail
-3	Bus
+2	Rail (intercity or long-distance)
+3	Bus (short- or long-distance)
 4	Ferry
 5	Cable tram
 6	Aerial lift

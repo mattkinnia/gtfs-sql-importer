@@ -1,10 +1,12 @@
 BEGIN;
 SET search_path to tap, public;
 
-SELECT plan(26);
+SELECT plan(28);
 
 SELECT col_is_fk(:'schema', 'routes', ARRAY['route_type'], 'routes.route_type is a foreign key');
 SELECT col_is_fk(:'schema', 'routes', ARRAY['feed_index', 'agency_id'], 'routes.agency_id is a foreign key');
+SELECT col_is_fk(:'schema', 'routes', ARRAY['continuous_pickup'], 'routes.continuous_pickup is a foreign key');
+SELECT col_is_fk(:'schema', 'routes', ARRAY['continuous_drop_off'], 'routes.continuous_drop_off is a foreign key');
 
 SELECT col_is_fk(:'schema', 'calendar_dates', ARRAY['feed_index', 'service_id'], 'calendar_dates.service_id is a foreign key');
 SELECT col_is_fk(:'schema', 'calendar_dates', ARRAY['exception_type'], 'calendar_dates.exception_type is a foreign key');
@@ -25,6 +27,8 @@ SELECT col_is_fk(:'schema', 'stop_times', ARRAY['feed_index', 'stop_id'], 'stop_
 SELECT col_is_fk(:'schema', 'stop_times', ARRAY['continuous_pickup'], 'stop_times.continuous_pickup is a foreign key');
 SELECT col_is_fk(:'schema', 'stop_times', ARRAY['pickup_type'], 'stop_times.pickup_type is a foreign key');
 SELECT col_is_fk(:'schema', 'stop_times', ARRAY['drop_off_type'], 'stop_times.drop_off_type is a foreign key');
+SELECT col_is_fk(:'schema', 'stop_times', ARRAY['continuous_pickup'], 'stop_times.continuous_pickup is a foreign key');
+SELECT col_is_fk(:'schema', 'stop_times', ARRAY['continuous_drop_off'], 'stop_times.continuous_drop_off is a foreign key');
 
 SELECT col_is_fk(:'schema', 'frequencies', ARRAY['feed_index', 'trip_id'], 'frequencies.trip_id is a foreign key');
 

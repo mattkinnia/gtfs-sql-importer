@@ -23,5 +23,4 @@ SELECT set_eq(
   ARRAY[]::text[], 'routes_agency_id_fkey would be valid'
 );
 
-
 SELECT * FROM finish();

@@ -1,7 +1,7 @@
 BEGIN;
 SET search_path TO tap, public;
 
-SELECT plan(106);
+SELECT plan(115);
 
 SELECT has_schema(:'schema');
 
@@ -72,6 +72,7 @@ SELECT
   )
 FROM (VALUES
   ('continuous_pickup'::name, ARRAY['continuous_pickup', 'description']::name[]),
+  ('continuous_drop_off'::name, ARRAY['continuous_drop_off', 'description']::name[]),
   ('exception_types', ARRAY['exception_type', 'description']),
   ('location_types', ARRAY['location_type', 'description']),
   ('pathway_modes', ARRAY['pathway_mode', 'description']),
