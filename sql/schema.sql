@@ -20,7 +20,7 @@ CREATE TABLE feed_info (
 );
 
 CREATE TABLE agency (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   agency_id text default '',
   agency_name text default null,
   agency_url text default null,
@@ -80,7 +80,7 @@ CREATE TABLE continuous_pickup (
 );
 
 CREATE TABLE calendar (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   service_id text,
   monday int not null,
   tuesday int not null,
@@ -120,7 +120,7 @@ CREATE TRIGGER calendar_trigger AFTER INSERT ON calendar
   FOR EACH STATEMENT EXECUTE PROCEDURE feed_date_update();
 
 CREATE TABLE levels (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   level_id text,
   level_index double precision,
   level_name text,
@@ -128,7 +128,7 @@ CREATE TABLE levels (
 );
 
 CREATE TABLE stops (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   stop_id text,
   stop_name text,
   stop_desc text,
@@ -177,7 +177,7 @@ CREATE TABLE route_types (
 );
 
 CREATE TABLE routes (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   route_id text,
   agency_id text,
   route_short_name text default '',
@@ -196,7 +196,7 @@ CREATE TABLE routes (
 );
   
 CREATE TABLE calendar_dates (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   service_id text,
   date date not null,
   exception_type int REFERENCES exception_types (exception_type),
@@ -226,7 +226,7 @@ CREATE TABLE fare_attributes (
 );
 
 CREATE TABLE fare_rules (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   fare_id text,
   route_id text,
   origin_id text,
@@ -245,7 +245,7 @@ CREATE TABLE fare_rules (
 );
 
 CREATE TABLE shapes (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   shape_id text not null,
   shape_pt_lat double precision not null,
   shape_pt_lon double precision not null,
@@ -285,7 +285,7 @@ CREATE TRIGGER shape_geom_trigger AFTER INSERT ON shapes
 
 -- Create new table to store the shape geometries
 CREATE TABLE shape_geoms (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   shape_id text not null,
   length numeric(12, 2) not null,
   the_geom geometry(LineString, 4326),
@@ -293,7 +293,7 @@ CREATE TABLE shape_geoms (
 );
 
 CREATE TABLE trips (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   route_id text not null,
   service_id text not null,
   trip_id text not null,
@@ -318,7 +318,7 @@ CREATE TABLE trips (
 );
 
 CREATE TABLE stop_times (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   trip_id text not null,
   -- Check that casting to time interval works.
   -- Interval used rather than Time because: 
@@ -430,7 +430,7 @@ CREATE TRIGGER stop_times_dist_stmt_trigger AFTER INSERT ON stop_times
   FOR EACH STATEMENT EXECUTE PROCEDURE dist_update();
 
 CREATE TABLE frequencies (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   trip_id text,
   start_time text not null CHECK (start_time::interval = start_time::interval),
   end_time text not null CHECK (end_time::interval = end_time::interval),
@@ -444,7 +444,7 @@ CREATE TABLE frequencies (
 );
 
 CREATE TABLE transfers (
-  feed_index int NOT NULL REFERENCES feed_info (feed_index),
+  feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   from_stop_id text,
   to_stop_id text,
   transfer_type int REFERENCES transfer_types(transfer_type),
@@ -472,7 +472,7 @@ CREATE TABLE pathway_modes (
 );
 
 CREATE TABLE pathways (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   pathway_id text,
   from_stop_id text,
   to_stop_id text,
@@ -489,7 +489,7 @@ CREATE TABLE pathways (
 );
 
 CREATE TABLE translations (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   table_name text,
   field_name text,
   language text,
@@ -501,7 +501,7 @@ CREATE TABLE translations (
 );
 
 CREATE TABLE attributions (
-  feed_index integer NOT NULL REFERENCES feed_info (feed_index),
+  feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   attribution_id text,
   agency_id text,
   route_id text,
