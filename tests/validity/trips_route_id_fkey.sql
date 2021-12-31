@@ -7,7 +7,8 @@ SELECT set_eq(
   WHERE b.route_id IS NULL AND feed_index = %s',
   :feed_index
   ),
-  ARRAY[]::text[]
+  ARRAY[]::text[],
+  'trips_route_id_fkey would be valid'
 );
 
 SELECT * from finish();

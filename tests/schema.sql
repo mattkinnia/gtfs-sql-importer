@@ -1,32 +1,15 @@
 BEGIN;
 SET search_path TO tap, public;
 
-SELECT plan(115);
+SELECT plan(114);
 
 SELECT has_schema(:'schema');
 
 SELECT functions_are(:'schema', ARRAY[
-    'dist_insert',
-    'dist_update',
     'feed_date_update',
     'safe_locate',
-    'shape_update',
     'stop_geom_update'
 ]);
-
-SELECT is(md5(p.prosrc), 'a87fda2155c046c96052c56d9be1b7ce', 'Function dist_insert body should match checksum')
-  FROM pg_catalog.pg_proc p
-  JOIN pg_catalog.pg_namespace n ON p.pronamespace = n.oid
- WHERE n.nspname = :'schema'
-   AND proname = 'dist_insert'
-   AND proargtypes::text = '';
-
-SELECT is(md5(p.prosrc), 'a862974bb001b0e608d1a56110d30f03', 'Function dist_update body should match checksum')
-  FROM pg_catalog.pg_proc p
-  JOIN pg_catalog.pg_namespace n ON p.pronamespace = n.oid
- WHERE n.nspname = :'schema'
-   AND proname = 'dist_update'
-   AND proargtypes::text = '';
 
 SELECT is(md5(p.prosrc), '2065575f11e67e941eda441c4994c629', 'Function safe_locate body should match checksum')
   FROM pg_catalog.pg_proc p
@@ -56,7 +39,10 @@ SELECT is(md5(p.prosrc), '4b98b092dbb9f88986747b5c155dc39d', 'Function feed_date
    AND proname = 'feed_date_update'
    AND proargtypes::text = '';
 
-SELECT 
+SELECT has_trigger(:'schema'::name, 'calendar'::name, 'calendar_trigger'::name);
+SELECT has_trigger(:'schema'::name, 'stops'::name, 'stop_geom_trigger'::name);
+
+SELECT
   collect_tap(
     has_table(:'schema'::name, tname::name),
     has_pk(:'schema', tname, format('Table %s should have a primary key', tname)),

@@ -51,17 +51,19 @@ jobs:
           unzip -u pgtap-1.2.0.zip
           make -C pgtap-1.2.0 sql/pgtap.sql
           PGOPTIONS=--search_path=tap,public psql -c "CREATE SCHEMA tap" -f pgtap-1.2.0/sql/pgtap.sql
-      - run: make init drop_constraints
-      - run: make --warn-undefined-variables load
+      - run: make init drop_constraints drop_notnull
+      - run: make load
         env:
           GTFS: tests/data/${{ matrix.gtfs }}.zip
-      - run: make add_constraints || echo "could not add constraints"
-      - name: Run pgTAP tests
-        run: make test
+      - run: make add_constraints add_notnull || echo "could not add constraints"
+        name: Try to add constraints
+      - run: make test
       - name: Run validity tests
-        run: make check add_constraints
+        run: make check
         env:
           FEED_INDEX: 1
-      - run: psql -c "TABLE gtfs.feed_info"
-      - run: psql -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs.stop_times LIMIT 10"
-      - run: psql -c "SELECT feed_index, shape_id, length FROM gtfs.shape_geoms LIMIT 10"
+      - name: Run some basic queries
+        run: |
+          psql -c "SELECT feed_index, feed_file FROM gtfs.feed_info"
+          psql -c "SELECT feed_index, trip_id, stop_id, stop_sequence, shape_dist_traveled FROM gtfs.stop_times LIMIT 10"
+          psql -c "SELECT feed_index, shape_id, length FROM gtfs.shape_geoms LIMIT 10"

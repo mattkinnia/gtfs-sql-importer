@@ -1,5 +1,6 @@
+BEGIN;
 SET search_path TO tap, public;
-SELECT plan(28);
+SELECT plan(29);
 SELECT has_table(:'schema', 'feed_info', 'table feed_info exists');
 SELECT has_pk(:'schema', 'feed_info', 'table feed_info has primary key');
 SELECT has_column(:'schema', 'feed_info', 'feed_index', 'table feed_info has column feed_index');
@@ -28,4 +29,6 @@ SELECT has_column(:'schema', 'feed_info', 'feed_download_date', 'table feed_info
 SELECT col_type_is(:'schema', 'feed_info', 'feed_download_date', 'date', 'column feed_info.feed_download_date is date');
 SELECT has_column(:'schema', 'feed_info', 'feed_file', 'table feed_info has column feed_file');
 SELECT col_type_is(:'schema', 'feed_info', 'feed_file', 'text', 'column feed_info.feed_file is text');
+SELECT col_is_unique(:'schema', 'feed_info', 'feed_file', 'column feed_info.feed_file is unique');
 SELECT * FROM finish();
+ROLLBACK;

@@ -54,7 +54,7 @@ SELECT col_hasnt_default(:'schema', 'attributions', 'trip_id', 'Column gtfs.attr
 
 SELECT has_column(       :'schema', 'attributions', 'organization_name', 'Column gtfs.attributions.organization_name should exist');
 SELECT col_type_is(      :'schema', 'attributions', 'organization_name', 'text', 'Column gtfs.attributions.organization_name should be type text');
-SELECT col_is_null(      :'schema', 'attributions', 'organization_name', 'Column gtfs.attributions.organization_name should allow NULL');
+SELECT col_not_null(     :'schema', 'attributions', 'organization_name', 'Column gtfs.attributions.organization_name should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'attributions', 'organization_name', 'Column gtfs.attributions.organization_name should not  have a default');
 
 SELECT has_column(       :'schema', 'attributions', 'is_producer', 'Column gtfs.attributions.is_producer should exist');

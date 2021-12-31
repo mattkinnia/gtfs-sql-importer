@@ -35,7 +35,7 @@ SELECT col_hasnt_default(:'schema', 'translations', 'table_name', 'Column gtfs.t
 
 SELECT has_column(       :'schema', 'translations', 'field_name', 'Column gtfs.translations.field_name should exist');
 SELECT col_type_is(      :'schema', 'translations', 'field_name', 'text', 'Column gtfs.translations.field_name should be type text');
-SELECT col_is_null(      :'schema', 'translations', 'field_name', 'Column gtfs.translations.field_name should allow NULL');
+SELECT col_not_null(     :'schema', 'translations', 'field_name', 'Column gtfs.translations.field_name should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'translations', 'field_name', 'Column gtfs.translations.field_name should not  have a default');
 
 SELECT has_column(       :'schema', 'translations', 'language', 'Column gtfs.translations.language should exist');
@@ -45,7 +45,7 @@ SELECT col_hasnt_default(:'schema', 'translations', 'language', 'Column gtfs.tra
 
 SELECT has_column(       :'schema', 'translations', 'translation', 'Column gtfs.translations.translation should exist');
 SELECT col_type_is(      :'schema', 'translations', 'translation', 'text', 'Column gtfs.translations.translation should be type text');
-SELECT col_is_null(      :'schema', 'translations', 'translation', 'Column gtfs.translations.translation should allow NULL');
+SELECT col_not_null(     :'schema', 'translations', 'translation', 'Column gtfs.translations.translation should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'translations', 'translation', 'Column gtfs.translations.translation should not  have a default');
 
 SELECT has_column(       :'schema', 'translations', 'record_id', 'Column gtfs.translations.record_id should exist');

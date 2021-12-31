@@ -40,22 +40,22 @@ SELECT col_hasnt_default(:'schema', 'pathways', 'pathway_id', 'Column gtfs.pathw
 
 SELECT has_column(       :'schema', 'pathways', 'from_stop_id', 'Column gtfs.pathways.from_stop_id should exist');
 SELECT col_type_is(      :'schema', 'pathways', 'from_stop_id', 'text', 'Column gtfs.pathways.from_stop_id should be type text');
-SELECT col_is_null(      :'schema', 'pathways', 'from_stop_id', 'Column gtfs.pathways.from_stop_id should allow NULL');
+SELECT col_not_null(     :'schema', 'pathways', 'from_stop_id', 'Column gtfs.pathways.from_stop_id should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'pathways', 'from_stop_id', 'Column gtfs.pathways.from_stop_id should not  have a default');
 
 SELECT has_column(       :'schema', 'pathways', 'to_stop_id', 'Column gtfs.pathways.to_stop_id should exist');
 SELECT col_type_is(      :'schema', 'pathways', 'to_stop_id', 'text', 'Column gtfs.pathways.to_stop_id should be type text');
-SELECT col_is_null(      :'schema', 'pathways', 'to_stop_id', 'Column gtfs.pathways.to_stop_id should allow NULL');
+SELECT col_not_null(     :'schema', 'pathways', 'to_stop_id', 'Column gtfs.pathways.to_stop_id should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'pathways', 'to_stop_id', 'Column gtfs.pathways.to_stop_id should not  have a default');
 
 SELECT has_column(       :'schema', 'pathways', 'pathway_mode', 'Column gtfs.pathways.pathway_mode should exist');
 SELECT col_type_is(      :'schema', 'pathways', 'pathway_mode', 'integer', 'Column gtfs.pathways.pathway_mode should be type integer');
-SELECT col_is_null(      :'schema', 'pathways', 'pathway_mode', 'Column gtfs.pathways.pathway_mode should allow NULL');
+SELECT col_not_null(     :'schema', 'pathways', 'pathway_mode', 'Column gtfs.pathways.pathway_mode should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'pathways', 'pathway_mode', 'Column gtfs.pathways.pathway_mode should not  have a default');
 
 SELECT has_column(       :'schema', 'pathways', 'is_bidirectional', 'Column gtfs.pathways.is_bidirectional should exist');
 SELECT col_type_is(      :'schema', 'pathways', 'is_bidirectional', 'integer', 'Column gtfs.pathways.is_bidirectional should be type integer');
-SELECT col_is_null(      :'schema', 'pathways', 'is_bidirectional', 'Column gtfs.pathways.is_bidirectional should allow NULL');
+SELECT col_not_null(     :'schema', 'pathways', 'is_bidirectional', 'Column gtfs.pathways.is_bidirectional should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'pathways', 'is_bidirectional', 'Column gtfs.pathways.is_bidirectional should not  have a default');
 
 SELECT has_column(       :'schema', 'pathways', 'length', 'Column gtfs.pathways.length should exist');

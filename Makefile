@@ -9,6 +9,8 @@ TABLES = stop_times trips routes \
 
 SCHEMA = gtfs
 
+SRID = 4326
+
 psql = $(strip psql -v schema=$(SCHEMA))
 
 .PHONY: all load vacuum init clean \
@@ -16,17 +18,20 @@ psql = $(strip psql -v schema=$(SCHEMA))
 	drop_constraints add_constraints \
 	drop_indices add_indices \
 	add_triggers drop_triggers \
+	drop_notnull add_notnull \
 	$(addprefix load-,$(TABLES))
 
 all:
 
-add_constraints add_indices add_triggers: add_%: sql/%.sql
+add_constraints add_indices add_triggers add_notnull: add_%: sql/%.sql
 	$(psql) -f $<
 
-drop_indices drop_constraints drop_triggers: drop_%: sql/drop_%.sql
+drop_indices drop_constraints drop_triggers drop_notnull: drop_%: sql/drop_%.sql
 	$(psql) -f $<
 
 load: $(addprefix load-,$(TABLES))
+	$(psql) -v schema=$(SCHEMA) -v feed_file=$(GTFS) --set srid=$(SRID) -f sql/shape_geoms_populate.sql
+	$(psql) -v schema=$(SCHEMA) -v feed_file=$(GTFS) --set srid=$(SRID) -f sql/stop_time_update_distance.sql
 	@$(psql) -t -A -c "SELECT format('* loaded %s with feed index = %s', feed_file, feed_index) FROM $(SCHEMA).feed_info WHERE feed_file = '$(GTFS)'"
 
 $(filter-out load-feed_info,$(addprefix load-,$(TABLES))): load-%: load-feed_info | $(GTFS)

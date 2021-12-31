@@ -4,34 +4,35 @@ SET search_path to :schema, public;
 
 CREATE TABLE feed_info (
   feed_index serial PRIMARY KEY, -- tracks uploads, avoids key collisions
-  feed_publisher_name text default null,
-  feed_publisher_url text default null,
-  feed_timezone text default null,
-  feed_lang text default null,
+  feed_publisher_name text not null,
+  feed_publisher_url text not null,
+  feed_lang text not null,
   default_lang text default null,
-  feed_version text default null,
   feed_start_date date default null,
   feed_end_date date default null,
+  feed_version text default null,
+  -- unofficial features
+  feed_download_date date,
+  feed_file text,
+  feed_timezone text default null,
   feed_id text default null,
   feed_contact_url text default null,
   feed_contact_email text default null,
-  feed_download_date date,
-  feed_file text,
   CONSTRAINT feed_file_uniq UNIQUE (feed_file)
 );
 
 CREATE TABLE agency (
   feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   agency_id text default '',
-  agency_name text default null,
-  agency_url text default null,
-  agency_timezone text default null,
+  agency_name text not null,
+  agency_url text not  null,
+  agency_timezone text not null,
   -- optional
-  agency_lang text default null,
-  agency_phone text default null,
-  agency_fare_url text default null,
-  agency_email text default null,
-  bikes_policy_url text default null,
+  agency_lang text,
+  agency_phone text,
+  agency_fare_url text,
+  agency_email text,
+  bikes_policy_url text,
   CONSTRAINT agency_pkey PRIMARY KEY (feed_index, agency_id)
 );
 
@@ -127,22 +128,22 @@ CREATE TRIGGER calendar_trigger AFTER INSERT ON calendar
 
 CREATE TABLE levels (
   feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  level_id text,
-  level_index double precision,
+  level_id text not null,
+  level_index double precision not null,
   level_name text,
   PRIMARY KEY (feed_index, level_id)
 );
 
 CREATE TABLE stops (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  stop_id text,
+  stop_id text not null,
+  stop_code text,
   stop_name text,
   stop_desc text,
   stop_lat double precision,
   stop_lon double precision,
   zone_id text,
   stop_url text,
-  stop_code text,
   stop_street text,
   stop_city text,
   stop_region text,
@@ -183,12 +184,12 @@ CREATE TABLE route_types (
 
 CREATE TABLE routes (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  route_id text,
+  route_id text not null,
   agency_id text,
   route_short_name text default '',
   route_long_name text default '',
-  route_desc text default '',
-  route_type int,
+  route_desc text,
+  route_type int not null,
   route_url text,
   route_color text,
   route_text_color text,
@@ -204,7 +205,7 @@ CREATE TABLE routes (
   
 CREATE TABLE calendar_dates (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  service_id text,
+  service_id text not null,
   date date not null,
   exception_type int REFERENCES exception_types (exception_type),
   CONSTRAINT calendar_dates_service_id_fkey FOREIGN KEY (feed_index, service_id)
@@ -222,11 +223,11 @@ CREATE TABLE fare_attributes (
   fare_id text not null,
   price double precision not null,
   currency_type text not null,
-  payment_method int REFERENCES payment_methods,
-  transfers int,
+  payment_method int NOT NULL REFERENCES payment_methods,
+  transfers int NOT NULL,
   transfer_duration int,
   -- unofficial features
-  agency_id text default null,
+  agency_id text,
   CONSTRAINT fare_attributes_fkey FOREIGN KEY (feed_index, agency_id)
     REFERENCES agency (feed_index, agency_id),
   CONSTRAINT fare_attributes_pkey PRIMARY KEY (feed_index, fare_id)
@@ -234,13 +235,13 @@ CREATE TABLE fare_attributes (
 
 CREATE TABLE fare_rules (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  fare_id text,
+  fare_id text NOT NULL,
   route_id text,
   origin_id text,
   destination_id text,
   contains_id text,
   -- unofficial features
-  service_id text default null,
+  service_id text,
   CONSTRAINT fare_rules_service_fkey FOREIGN KEY (feed_index, service_id)
     REFERENCES calendar (feed_index, service_id),
   CONSTRAINT fare_rules_fare_id_fkey FOREIGN KEY (feed_index, fare_id)
@@ -258,44 +259,16 @@ CREATE TABLE shapes (
   shape_pt_lon double precision not null,
   shape_pt_sequence int not null,
   -- optional
-  shape_dist_traveled double precision default null,
+  shape_dist_traveled double precision,
   CONSTRAINT shapes_pk PRIMARY KEY (feed_index, shape_id, shape_pt_sequence)
 );
-
-CREATE OR REPLACE FUNCTION shape_update()
-  RETURNS TRIGGER AS $$
-  BEGIN
-    INSERT INTO shape_geoms
-      (feed_index, shape_id, length, the_geom)
-    SELECT
-      feed_index,
-      shape_id,
-      ST_Length(ST_MakeLine(array_agg(geom ORDER BY shape_pt_sequence))::geography) as length,
-      ST_SetSRID(ST_MakeLine(array_agg(geom ORDER BY shape_pt_sequence)), 4326) AS the_geom
-    FROM (
-      SELECT
-        feed_index,
-        shape_id,
-        shape_pt_sequence,
-        ST_MakePoint(shape_pt_lon, shape_pt_lat) AS geom
-      FROM shapes s
-        LEFT JOIN shape_geoms sg USING (feed_index, shape_id)
-      WHERE the_geom IS NULL
-    ) a GROUP BY feed_index, shape_id;
-  RETURN NULL;
-  END;
-  $$ LANGUAGE plpgsql
-  SET search_path = :schema, public;
-
-CREATE TRIGGER shape_geom_trigger AFTER INSERT ON shapes
-  FOR EACH STATEMENT EXECUTE PROCEDURE shape_update();
 
 -- Create new table to store the shape geometries
 CREATE TABLE shape_geoms (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   shape_id text not null,
   length numeric(12, 2) not null,
-  the_geom geometry(LineString, 4326),
+  the_geom geometry(LineString, 4326) not null,
   CONSTRAINT shape_geom_pkey PRIMARY KEY (feed_index, shape_id)
 );
 
@@ -310,13 +283,12 @@ CREATE TABLE trips (
   shape_id text,
   trip_short_name text,
   wheelchair_accessible int REFERENCES wheelchair_accessible(wheelchair_accessible),
-
   -- unofficial features
-  direction text default null,
-  schd_trip_id text default null,
-  trip_type text default null,
-  exceptional int default null,
-  bikes_allowed int default null,
+  direction text,
+  schd_trip_id text,
+  trip_type text,
+  exceptional int,
+  bikes_allowed int,
   CONSTRAINT trips_route_id_fkey FOREIGN KEY (feed_index, route_id)
     REFERENCES routes (feed_index, route_id),
   CONSTRAINT trips_calendar_fkey FOREIGN KEY (feed_index, service_id)
@@ -372,68 +344,6 @@ CREATE OR REPLACE FUNCTION safe_locate
     ));
   $$ LANGUAGE SQL;
 
--- Fill in the shape_dist_traveled field using stop and shape geometries. 
-CREATE OR REPLACE FUNCTION dist_insert()
-  RETURNS TRIGGER AS $$
-  BEGIN
-  NEW.shape_dist_traveled := (
-    SELECT
-      ST_LineLocatePoint(route.the_geom, stop.the_geom) * route.length
-    FROM stops as stop
-      LEFT JOIN trips ON (stop.feed_index=trips.feed_index AND trip_id=NEW.trip_id)
-      LEFT JOIN shape_geoms AS route ON (route.feed_index = stop.feed_index and trips.shape_id = route.shape_id)
-      WHERE stop_id = NEW.stop_id
-        AND stop.feed_index = COALESCE(NEW.feed_index::integer, (
-          SELECT column_default::integer
-          FROM information_schema.columns
-          WHERE (table_schema, table_name, column_name) = (TG_TABLE_SCHEMA, 'stop_times', 'feed_index')
-        ))
-  )::NUMERIC;
-  RETURN NEW;
-  END;
-  $$
-  LANGUAGE plpgsql
-  SET search_path = :schema, public;
-
-CREATE TRIGGER stop_times_dist_row_trigger BEFORE INSERT ON stop_times
-  FOR EACH ROW
-  WHEN (NEW.shape_dist_traveled IS NULL)
-  EXECUTE PROCEDURE dist_insert();
-
--- Correct out-of-order shape_dist_traveled fields.
-CREATE OR REPLACE FUNCTION dist_update()
-  RETURNS TRIGGER AS $$
-  BEGIN
-  WITH f AS (SELECT MAX(feed_index) AS feed_index FROM feed_info)
-  UPDATE stop_times s
-    SET shape_dist_traveled = safe_locate(r.the_geom, p.the_geom, lag::numeric, coalesce(lead, length)::numeric, length::numeric)
-  FROM
-    (
-      SELECT
-        feed_index,
-        trip_id,
-        stop_id,
-        coalesce(lag(shape_dist_traveled) over (trip), 0) AS lag,
-        shape_dist_traveled AS dist,
-        lead(shape_dist_traveled) over (trip) AS lead
-      FROM stop_times
-        INNER JOIN f USING (feed_index)
-      WINDOW trip AS (PARTITION BY feed_index, trip_id ORDER BY stop_sequence)
-    ) AS d
-    LEFT JOIN stops AS p USING (feed_index, stop_id)
-    LEFT JOIN trips USING (feed_index, trip_id)
-    LEFT JOIN shape_geoms r USING (feed_index, shape_id)
-  WHERE (s.feed_index, s.trip_id, s.stop_id) = (d.feed_index, d.trip_id, d.stop_id)
-    AND COALESCE(lead, length) > lag
-    AND (dist > COALESCE(lead, length) OR dist < lag);
-  RETURN NULL;
-  END;
-  $$ LANGUAGE plpgsql
-  SET search_path = :schema, public;
-
-CREATE TRIGGER stop_times_dist_stmt_trigger AFTER INSERT ON stop_times
-  FOR EACH STATEMENT EXECUTE PROCEDURE dist_update();
-
 CREATE TABLE frequencies (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
   trip_id text,
@@ -450,9 +360,9 @@ CREATE TABLE frequencies (
 
 CREATE TABLE transfers (
   feed_index int NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  from_stop_id text,
-  to_stop_id text,
-  transfer_type int REFERENCES transfer_types(transfer_type),
+  from_stop_id text not null,
+  to_stop_id text not null,
+  transfer_type int not null REFERENCES transfer_types(transfer_type),
   min_transfer_time int,
   -- Unofficial fields
   from_route_id text default null,
@@ -478,11 +388,11 @@ CREATE TABLE pathway_modes (
 
 CREATE TABLE pathways (
   feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  pathway_id text,
-  from_stop_id text,
-  to_stop_id text,
-  pathway_mode integer REFERENCES pathway_modes (pathway_mode),
-  is_bidirectional integer,
+  pathway_id text not null,
+  from_stop_id text not null,
+  to_stop_id text not null,
+  pathway_mode integer not null REFERENCES pathway_modes (pathway_mode),
+  is_bidirectional integer not null,
   length double precision,
   traversal_time integer,
   stair_count integer,
@@ -495,10 +405,10 @@ CREATE TABLE pathways (
 
 CREATE TABLE translations (
   feed_index integer NOT NULL REFERENCES feed_info (feed_index) ON DELETE CASCADE,
-  table_name text,
-  field_name text,
-  language text,
-  translation text,
+  table_name text not null,
+  field_name text not null,
+  language text not null,
+  translation text not null,
   record_id text,
   record_sub_id text,
   field_value text,
@@ -511,7 +421,7 @@ CREATE TABLE attributions (
   agency_id text,
   route_id text,
   trip_id text,
-  organization_name text,
+  organization_name text not null,
   is_producer boolean,
   is_operator boolean,
   is_authority boolean,

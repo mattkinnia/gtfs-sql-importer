@@ -28,7 +28,7 @@ SELECT col_hasnt_default(:'schema', 'levels', 'level_id', 'Column gtfs.levels.le
 
 SELECT has_column(       :'schema', 'levels', 'level_index', 'Column gtfs.levels.level_index should exist');
 SELECT col_type_is(      :'schema', 'levels', 'level_index', 'double precision', 'Column gtfs.levels.level_index should be type double precision');
-SELECT col_is_null(      :'schema', 'levels', 'level_index', 'Column gtfs.levels.level_index should allow NULL');
+SELECT col_not_null(     :'schema', 'levels', 'level_index', 'Column gtfs.levels.level_index should not allow NULL');
 SELECT col_hasnt_default(:'schema', 'levels', 'level_index', 'Column gtfs.levels.level_index should not  have a default');
 
 SELECT has_column(       :'schema', 'levels', 'level_name', 'Column gtfs.levels.level_name should exist');

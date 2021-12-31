@@ -10,6 +10,8 @@ SELECT set_eq(
     AND feed_index = %s',
     :feed_index
   ),
-  ARRAY[]::text[]);
+  ARRAY[]::text[],
+  'frequencies_trip_fkey would be valid'
+);
 
 SELECT * FROM finish();
