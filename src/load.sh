@@ -23,7 +23,7 @@ fi
 export PGOPTIONS="${PGOPTIONS} -c client_min_messages=warning"
 
 # Remove possible BOM from header
-hed=$(unzip -p "$ZIP" "${TABLE}.txt" | head -n 1 | awk '{ sub(/^\xef\xbb\xbf/,"") } { print }')
+hed=$(unzip -p "$ZIP" "${TABLE}.txt" | head -n 1 | sed 's/^\xEF\xBB\xBF//')
 
 # Add unknown custom columns as text fields
 echo "$hed" \

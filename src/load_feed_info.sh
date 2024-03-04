@@ -16,7 +16,7 @@ export PGOPTIONS="${PGOPTIONS} -c client_min_messages=warning"
 
 if [[ $(unzip -Z -1 "$ZIP" | grep feed_info.txt) ]]; then
 
-    hed=$(unzip -p "$ZIP" feed_info.txt | head -n 1 | awk '{sub(/^\xef\xbb\xbf/,"")}{print}')
+    hed=$(unzip -p "$ZIP" feed_info.txt | head -n 1 | sed 's/^\xEF\xBB\xBF//')
 
     echo "$hed" \
     | awk -v schema=$SCHEMA -v FS=, -v table=feed_info '{for (i = 1; i <= NF; i++) print "ALTER TABLE " schema "." table " ADD COLUMN IF NOT EXISTS " $i " TEXT;"}' \
