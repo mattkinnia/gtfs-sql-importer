@@ -435,6 +435,42 @@ CREATE TABLE attributions (
   PRIMARY KEY (feed_index, attribution_id)
 );
 
+CREATE VIEW service_dates_view AS
+SELECT 
+    c.feed_index, c.service_id, d::date AS date
+FROM 
+    calendar c, generate_series(c.start_date::date, c.end_date::date, '1 day'::interval) AS d
+WHERE 
+    (
+        (c.monday = 1 AND EXTRACT(ISODOW FROM d) = 1) OR
+        (c.tuesday = 1 AND EXTRACT(ISODOW FROM d) = 2) OR
+        (c.wednesday = 1 AND EXTRACT(ISODOW FROM d) = 3) OR
+        (c.thursday = 1 AND EXTRACT(ISODOW FROM d) = 4) OR
+        (c.friday = 1 AND EXTRACT(ISODOW FROM d) = 5) OR
+        (c.saturday = 1 AND EXTRACT(ISODOW FROM d) = 6) OR
+        (c.sunday = 1 AND EXTRACT(ISODOW FROM d) = 7)
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM calendar_dates cd
+        WHERE cd.service_id = c.service_id 
+        AND cd.date = d::date
+        AND cd.exception_type = 2
+    )
+UNION
+SELECT 
+    c.feed_index, cd.service_id, cd.date
+FROM 
+    calendar c
+JOIN 
+    calendar_dates cd 
+    ON c.service_id = cd.service_id 
+    AND c.feed_index = cd.feed_index
+WHERE 
+    cd.exception_type = 1 
+    AND c.start_date <= cd.date 
+    AND cd.date <= c.end_date;
+
 insert into exception_types (exception_type, description) values 
   (1, 'service has been added'),
   (2, 'service has been removed');
